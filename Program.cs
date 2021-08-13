@@ -7,14 +7,17 @@ using BearLib;
 
 namespace terminalhack
 {
+
+
     class HackGame
     {
         private static readonly int OffsetInc = 12;
         private static readonly int TerminalHeight = 24;
         private static readonly int TerminalWidth = 64;
         private static readonly int TableHeight = 32;
-        private static readonly int TableWidth = 12;
+        private static readonly int TableWidth = 12 + 1;
         private static readonly int OffsetMax = 65150;
+        private static readonly string TrashChars = "!\"#$%&\'()*+/:;<=>?@[\\]^_{|}";
         private System.Drawing.Point Cursor = new System.Drawing.Point(1, 0);
         private int OffsetStart = 0;
         private Random rnd = new Random();
@@ -25,6 +28,21 @@ namespace terminalhack
         private List<List<string>> WordsTable = new List<List<string>>(TableHeight);
         private List<string> WordsDict = new List<string>();
         private string Password;
+        private static int Tor(int a, int b, int c)
+        {
+            int result = 0;
+
+            while (c < a)
+            {
+                c = (b - a + c + 1);
+            }
+            while (c > b)
+            {
+                c = (c + a - b - 1);
+            }
+            result = c;
+            return result;
+        }
         public HackGame(int TerminalLevel, int ScienceSkillLevel, int LuckyLevel = 5)
         {
             this.OffsetStart = rnd.Next(4096, OffsetMax);
@@ -62,10 +80,12 @@ namespace terminalhack
             this.Password = WordPool[rnd.Next(WordCount)];
             for (int i = 0; i < TableHeight; i++)
             {
-                this.WordsTable[i].Add("0x" + (this.OffsetStart + OffsetInc * i).ToString("X")+" ");
+                this.WordsTable[i].Add("0x" + (this.OffsetStart + OffsetInc * i).ToString("X") + " ");
 
                 this.WordsTable[i].Add(this.WordsDict[rnd.Next(this.WordsDict.Count)]);
-                //if (rnd.Next(100)<60) this.WordsTable[i].Add(this.WordsDict[rnd.Next(this.WordsDict.Count)]);
+                if (rnd.Next(100) < 60) this.WordsTable[i].Add(this.WordsDict[rnd.Next(this.WordsDict.Count)]);
+                if (rnd.Next(100) < 40) this.WordsTable[i].Add(this.WordsDict[rnd.Next(this.WordsDict.Count)]);
+                if (rnd.Next(100) < 20) this.WordsTable[i].Add(this.WordsDict[rnd.Next(this.WordsDict.Count)]);
             }
         }
         public void ShowWordsTable()
@@ -73,7 +93,7 @@ namespace terminalhack
             for (int y = 0; y < TableHeight; y++)
             {
                 int x = 0;
-                int dx = 0;
+                
                 foreach (var item in this.WordsTable[y])
                 {
                     if (x == this.Cursor.X && y == this.Cursor.Y)
@@ -86,16 +106,16 @@ namespace terminalhack
                         Terminal.BkColor(System.Drawing.Color.DarkGreen);
                         Terminal.Color(System.Drawing.Color.LightGreen);
                     }
-                    
+                    int dx = 0;
                     for (int i = 0; i < x; i++)
                     {
                         dx += this.WordsTable[y][i].Length;
                     }
 
                     if (y < TableHeight / 2)
-                        Terminal.Print(0+dx, y + 4, item);
+                        Terminal.Print(0 + dx, y + 4, item);
                     else
-                        Terminal.Print(20+dx, y + 4 - TableHeight / 2, item);
+                        Terminal.Print(20 + dx, y + 4 - TableHeight / 2, item);
 
 
                     x++;
@@ -105,27 +125,28 @@ namespace terminalhack
 
             }
             Terminal.Refresh();
-            
+            Terminal.Set("window: title=" + "'" + this.Cursor.ToString() + "'");
         }
         public void MoveCursor(int dx, int dy)
         {
             this.Cursor.X += dx;
             this.Cursor.Y += dy;
-            this.Cursor.Y = this.Cursor.Y % TableHeight;
+            this.Cursor.Y = Tor(0, TableHeight - 1, this.Cursor.Y);
             if (this.Cursor.X < 1)
             {
-                this.Cursor.Y-=16;
-                this.Cursor.Y = this.Cursor.Y % TableHeight;
-                this.Cursor.X = this.Cursor.X % this.WordsTable[this.Cursor.Y].Count();
-            } else 
+                this.Cursor.Y -= 16;
+                this.Cursor.Y = Tor(0, TableHeight - 1, this.Cursor.Y);
+                this.Cursor.X = this.WordsTable[this.Cursor.Y].Count()-1;
+            }
+            else
             if (this.Cursor.X >= this.WordsTable[this.Cursor.Y].Count())
             {
                 this.Cursor.Y += 16;
-                this.Cursor.Y = this.Cursor.Y % TableHeight;
-                this.Cursor.X = this.Cursor.X % this.WordsTable[this.Cursor.Y].Count();
+                this.Cursor.X = 1;
             }
+            this.Cursor.Y = Tor(0, TableHeight - 1, this.Cursor.Y);
+            this.Cursor.X = Tor(1, this.WordsTable[this.Cursor.Y].Count(), this.Cursor.X);
         }
-
     }
     class Programm
     {
@@ -163,8 +184,8 @@ namespace terminalhack
                 //if (Terminal.HasInput())
                 {
                     int TK = Terminal.Read();
-                    Terminal.Set("window: title="+"'"+Terminal.Peek().ToString()+"'");
-                    dx = TK == Terminal.TK_LEFT ? -1 : TK == Terminal.TK_RIGHT?1:0;
+                    //Terminal.Set("window: title=" + "'" + Terminal.Peek().ToString() + "'");
+                    dx = TK == Terminal.TK_LEFT ? -1 : TK == Terminal.TK_RIGHT ? 1 : 0;
                     dy = TK == Terminal.TK_UP ? -1 : TK == Terminal.TK_DOWN ? 1 : 0;
                 }
                 hg.MoveCursor(dx, dy);
