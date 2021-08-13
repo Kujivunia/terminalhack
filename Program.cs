@@ -232,7 +232,7 @@ namespace terminalhack
 
             while (this.WordsTable.Count() + ((this.PasswordLength - 1) * this.WordCount) < DampHeight * DampWidth)
             {
-                this.WordsTable.Insert(rnd.Next(this.WordsTable.Count()), TrashChars[rnd.Next(TrashChars.Count())].ToString());//заполняет таблицу мусором
+                this.WordsTable.Insert(rnd.Next(this.WordsTable.Count()+1), TrashChars[rnd.Next(TrashChars.Count())].ToString());//заполняет таблицу мусором
             }
 
             for (int i = 0; i < DampHeight; i++)
@@ -249,9 +249,9 @@ namespace terminalhack
                 foreach (var Char in Word)
                 {
                     if ((int)(i / DampWidth) < DampHeight / 2)
-                        Terminal.Print((int)(i % DampWidth) + 7, (int)(i / DampWidth) + 9, Char.ToString() == "]" || Char.ToString() == "[" ? Char.ToString() + Char.ToString() : Char.ToString());
+                        Terminal.Print((int)(i % DampWidth) + 7, (int)(i / DampWidth) + 9, Char.ToString() == "]" || Char.ToString() == "[" ? Char.ToString() + Char.ToString() : Char.ToString().ToUpper());
                     else
-                        Terminal.Print((int)(i % DampWidth) + 20 + 7, (int)(i / DampWidth) + 9 - DampHeight / 2, Char.ToString() == "]" || Char.ToString() == "[" ? Char.ToString() + Char.ToString() : Char.ToString());
+                        Terminal.Print((int)(i % DampWidth) + 20 + 7, (int)(i / DampWidth) + 9 - DampHeight / 2, Char.ToString() == "]" || Char.ToString() == "[" ? Char.ToString() + Char.ToString() : Char.ToString().ToUpper());
                     i++;
                 }
             }
@@ -261,9 +261,10 @@ namespace terminalhack
                 if (i < DampHeight / 2)
                     Terminal.Print(0, (int)(i) + 9, Address.ToString());
                 else
-                    Terminal.Print(20, (int)(i / 2) + 9 - DampHeight / 2, Address.ToString());
+                    Terminal.Print(20, (int)(i) + 9 - DampHeight / 2, Address.ToString());
                 i++;
             }
+            Terminal.Print(40, 24, "PASSWORD: "+this.Password.ToUpper());
             /*
             for (int y = 0; y < DampHeight; y++)
             {
