@@ -1,15 +1,17 @@
 ﻿using System;
+using System.IO;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using BearLib;
+using Newtonsoft.Json;
 
 namespace terminalhack
 {
 
 
-    class HackGame
+    class HackGameOld
     {
         private static readonly int OffsetInc = 12;
         private static readonly int TerminalHeight = 24;
@@ -43,7 +45,7 @@ namespace terminalhack
             result = c;
             return result;
         }
-        public HackGame(int TerminalLevel, int ScienceSkillLevel, int LuckyLevel = 5)
+        public HackGameOld(int TerminalLevel, int ScienceSkillLevel, int LuckyLevel = 5)
         {
             this.OffsetStart = rnd.Next(4096, OffsetMax);
             for (int i = 0; i < TableHeight; i++)
@@ -93,7 +95,7 @@ namespace terminalhack
             for (int y = 0; y < TableHeight; y++)
             {
                 int x = 0;
-                
+
                 foreach (var item in this.WordsTable[y])
                 {
                     if (x == this.Cursor.X && y == this.Cursor.Y)
@@ -136,7 +138,7 @@ namespace terminalhack
             {
                 this.Cursor.Y -= 16;
                 this.Cursor.Y = Tor(0, TableHeight - 1, this.Cursor.Y);
-                this.Cursor.X = this.WordsTable[this.Cursor.Y].Count()-1;
+                this.Cursor.X = this.WordsTable[this.Cursor.Y].Count() - 1;
             }
             else
             if (this.Cursor.X >= this.WordsTable[this.Cursor.Y].Count())
@@ -148,17 +150,200 @@ namespace terminalhack
             this.Cursor.X = Tor(1, this.WordsTable[this.Cursor.Y].Count(), this.Cursor.X);
         }
     }
+    //vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
+    class HackGame
+    {
+        private Random rnd = new Random();
+
+        private static readonly int DampHeight = 32;
+        private static readonly int DampWidth = 12;
+
+        private static readonly int OffsetInc = DampWidth;
+        private static readonly int OffsetMin = 4096;
+        private static readonly int OffsetMax = 65150;
+        private int OffsetStart = 0;
+
+        private static readonly int TerminalHeight = 25;
+        private static readonly int TerminalWidth = 80;
+
+
+
+        private static readonly string TrashChars = "!\"#$%&\'()*+/:;<=>?@[\\]^_{|}";
+        private static readonly string Brackets = "<>[]{}()";
+        private System.Drawing.Point Cursor = new System.Drawing.Point(0, 0);
+        private int CursorFlat = 0;
+
+        private int PasswordLength = 0;
+        private int BracketCount = 0;
+        private int WordCount = 0;
+        private List<string> WordsTable = new List<string>(DampHeight * DampWidth);
+        private List<KeyValuePair<int, int>> WordsTableRanges = new List<KeyValuePair<int, int>>(DampHeight * DampWidth);
+        private List<string> WordsDict = new List<string>();
+        private List<string> HexAddresses = new List<string>();
+        private string Password;
+        private static int Tor(int a, int b, int c)
+        {
+            int result = 0;
+
+            while (c < a)
+            {
+                c = (b - a + c + 1);
+            }
+            while (c > b)
+            {
+                c = (c + a - b - 1);
+            }
+            result = c;
+            return result;
+        }
+
+        public HackGame(List<string> WordsList, int TerminalLevel = 2, int ScienceSkillLevel = 50, int LuckyLevel = 5)
+        {
+            this.OffsetStart = rnd.Next(OffsetMin, OffsetMax);
+            this.PasswordLength = 4 + 2 * TerminalLevel;
+            this.WordCount = this.PasswordLength - rnd.Next(0, (int)(LuckyLevel / 2)) - (ScienceSkillLevel / 10);
+            this.WordCount = this.WordCount < 5 ? 5 : this.WordCount;
+            this.BracketCount = 50 + LuckyLevel * 10;
+
+            foreach (var item in WordsList.Where(item => item.Length == this.PasswordLength).ToList())
+            {
+                this.WordsDict.Add(item);
+            }
+
+            string options = "window: size =" + TerminalWidth.ToString() + "x" + TerminalHeight.ToString();
+            Terminal.Open();
+            Terminal.Set(options);
+            Terminal.BkColor(System.Drawing.Color.DarkGreen);
+            Terminal.Color(System.Drawing.Color.LightGreen);
+            Terminal.Clear();
+            Terminal.Refresh();
+        }
+
+        public void GenerateWordsTable()
+        {
+            for (int i = 0; i < this.WordCount; i++)//заполняет таблицу паролями
+            {
+                var j = rnd.Next(this.WordsDict.Count);
+                while (this.WordsTable.Contains(this.WordsDict[j]))
+                    j = rnd.Next(this.WordsDict.Count);
+                this.WordsTable.Add(this.WordsDict[j]);
+            }
+            this.Password = this.WordsTable[rnd.Next(this.WordCount)];
+
+            while (this.WordsTable.Count() + ((this.PasswordLength - 1) * this.WordCount) < DampHeight * DampWidth)
+            {
+                this.WordsTable.Insert(rnd.Next(this.WordsTable.Count()), TrashChars[rnd.Next(TrashChars.Count())].ToString());//заполняет таблицу мусором
+            }
+
+            for (int i = 0; i < DampHeight; i++)
+            {
+                this.HexAddresses.Add("0x" + (this.OffsetStart + OffsetInc * i).ToString("X"));
+            }
+
+        }
+        public void ShowWordsTable()
+        {
+            int i = 0;
+            foreach (var Word in this.WordsTable)
+            {
+                foreach (var Char in Word)
+                {
+                    if ((int)(i / DampWidth) < DampHeight / 2)
+                        Terminal.Print((int)(i % DampWidth) + 7, (int)(i / DampWidth) + 9, Char.ToString() == "]" || Char.ToString() == "[" ? Char.ToString() + Char.ToString() : Char.ToString());
+                    else
+                        Terminal.Print((int)(i % DampWidth) + 20 + 7, (int)(i / DampWidth) + 9 - DampHeight / 2, Char.ToString() == "]" || Char.ToString() == "[" ? Char.ToString() + Char.ToString() : Char.ToString());
+                    i++;
+                }
+            }
+            i = 0;
+            foreach (var Address in HexAddresses)
+            {
+                if (i < DampHeight / 2)
+                    Terminal.Print(0, (int)(i) + 9, Address.ToString());
+                else
+                    Terminal.Print(20, (int)(i / 2) + 9 - DampHeight / 2, Address.ToString());
+                i++;
+            }
+            /*
+            for (int y = 0; y < DampHeight; y++)
+            {
+                int x = 0;
+
+                foreach (var item in this.WordsTable[y])
+                {
+                    if (x == this.Cursor.X && y == this.Cursor.Y)
+                    {
+                        Terminal.Color(System.Drawing.Color.DarkGreen);
+                        Terminal.BkColor(System.Drawing.Color.LightGreen);
+                    }
+                    else
+                    {
+                        Terminal.BkColor(System.Drawing.Color.DarkGreen);
+                        Terminal.Color(System.Drawing.Color.LightGreen);
+                    }
+                    int dx = 0;
+                    for (int i = 0; i < x; i++)
+                    {
+                        //dx += this.WordsTable[y][i].Length;
+                    }
+
+                    if (y < DampHeight / 2)
+                        Terminal.Print(0 + dx, y + 4, item);
+                    else
+                        Terminal.Print(20 + dx, y + 4 - DampHeight / 2, item);
+
+
+                    x++;
+                }
+
+
+
+            }
+            */
+            Terminal.Refresh();
+            //Terminal.Set("window: title=" + "'" + this.Cursor.ToString() + "'");
+        }
+        public void MoveCursor(int dx, int dy)
+        {
+            this.Cursor.X += dx;
+            this.Cursor.Y += dy;
+            this.Cursor.Y = Tor(0, DampHeight - 1, this.Cursor.Y);
+            if (this.Cursor.X < 1)
+            {
+                this.Cursor.Y -= 16;
+                this.Cursor.Y = Tor(0, DampHeight - 1, this.Cursor.Y);
+                this.Cursor.X = this.WordsTable[this.Cursor.Y].Count() - 1;
+            }
+            else
+            if (this.Cursor.X >= this.WordsTable[this.Cursor.Y].Count())
+            {
+                this.Cursor.Y += 16;
+                this.Cursor.X = 1;
+            }
+            this.Cursor.Y = Tor(0, DampHeight - 1, this.Cursor.Y);
+            this.Cursor.X = Tor(1, this.WordsTable[this.Cursor.Y].Count(), this.Cursor.X);
+        }
+    }
+    //^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
     class Programm
     {
         static void Main(string[] args)
         {
+            StreamReader sr = new StreamReader("common.json");
+            string json = sr.ReadToEnd();
+            List<string> WordsDictionary = JsonConvert.DeserializeObject<List<string>>(json).Where(item => item.Length >= 4 && item.Length <= 12).ToList();
+            HackGame qwe = new HackGame(WordsDictionary);
+            qwe.GenerateWordsTable();
+            qwe.ShowWordsTable();
+            Terminal.Read();
+
             string hexValue = 27.ToString("X");
             int decValue = int.Parse(hexValue, System.Globalization.NumberStyles.HexNumber);
 
             Random rnd = new Random();
 
             Terminal.Open();
-            HackGame hg = new HackGame(4, 80);
+            HackGameOld hg = new HackGameOld(4, 80);
             List<string> WordsDict = new List<string>();
             for (int i = 0; i < 100; i++)
             {
