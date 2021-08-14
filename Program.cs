@@ -9,147 +9,6 @@ using Newtonsoft.Json;
 
 namespace terminalhack
 {
-
-
-    class HackGameOld
-    {
-        private static readonly int OffsetInc = 12;
-        private static readonly int TerminalHeight = 24;
-        private static readonly int TerminalWidth = 64;
-        private static readonly int TableHeight = 32;
-        private static readonly int TableWidth = 12 + 1;
-        private static readonly int OffsetMax = 65150;
-        private static readonly string TrashChars = "!\"#$%&\'()*+/:;<=>?@[\\]^_{|}";
-        private System.Drawing.Point Cursor = new System.Drawing.Point(1, 0);
-        private int OffsetStart = 0;
-        private Random rnd = new Random();
-        private List<int> PasswordLengthTable = new List<int>(5);
-        private int PasswordLength = 0;
-        private int BracketCount = 0;
-        private int WordCount = 0;
-        private List<List<string>> WordsTable = new List<List<string>>(TableHeight);
-        private List<string> WordsDict = new List<string>();
-        private string Password;
-        private static int Tor(int a, int b, int c)
-        {
-            int result = 0;
-
-            while (c < a)
-            {
-                c = (b - a + c + 1);
-            }
-            while (c > b)
-            {
-                c = (c + a - b - 1);
-            }
-            result = c;
-            return result;
-        }
-        public HackGameOld(int TerminalLevel, int ScienceSkillLevel, int LuckyLevel = 5)
-        {
-            this.OffsetStart = rnd.Next(4096, OffsetMax);
-            for (int i = 0; i < TableHeight; i++)
-            {
-                this.WordsTable.Add(new List<string>(TableWidth));
-            }
-            for (int i = 0; i < 5; i++)
-            {
-                this.PasswordLengthTable.Add(4 + 2 * i);
-            }
-            this.PasswordLength = this.PasswordLengthTable[TerminalLevel];
-            this.WordCount = this.PasswordLength - rnd.Next(0, (int)(LuckyLevel / 2)) - (ScienceSkillLevel / 10);
-            this.WordCount = this.WordCount < 5 ? 5 : this.WordCount;
-            this.BracketCount = 50 + LuckyLevel * 10;
-            string options = "window: size =" + TerminalWidth.ToString() + "x" + TerminalHeight.ToString();
-            Terminal.Set(options);
-        }
-        public void SetDict(List<string> Words)
-        {
-            foreach (var word in Words)
-            {
-                this.WordsDict.Add(word);
-            }
-        }
-        public void GenerateWordsTable()
-        {
-            List<string> WordPool = new List<string>();
-            for (int i = 0; i < WordCount; i++)
-            {
-                var j = rnd.Next(WordsDict.Count);
-                while (WordPool.Contains(WordsDict[j])) ;
-                WordPool.Add(WordsDict[j]);
-            }
-            this.Password = WordPool[rnd.Next(WordCount)];
-            for (int i = 0; i < TableHeight; i++)
-            {
-                this.WordsTable[i].Add("0x" + (this.OffsetStart + OffsetInc * i).ToString("X") + " ");
-
-                this.WordsTable[i].Add(this.WordsDict[rnd.Next(this.WordsDict.Count)]);
-                if (rnd.Next(100) < 60) this.WordsTable[i].Add(this.WordsDict[rnd.Next(this.WordsDict.Count)]);
-                if (rnd.Next(100) < 40) this.WordsTable[i].Add(this.WordsDict[rnd.Next(this.WordsDict.Count)]);
-                if (rnd.Next(100) < 20) this.WordsTable[i].Add(this.WordsDict[rnd.Next(this.WordsDict.Count)]);
-            }
-        }
-        public void ShowWordsTable()
-        {
-            for (int y = 0; y < TableHeight; y++)
-            {
-                int x = 0;
-
-                foreach (var item in this.WordsTable[y])
-                {
-                    if (x == this.Cursor.X && y == this.Cursor.Y)
-                    {
-                        Terminal.Color(System.Drawing.Color.DarkGreen);
-                        Terminal.BkColor(System.Drawing.Color.LightGreen);
-                    }
-                    else
-                    {
-                        Terminal.BkColor(System.Drawing.Color.DarkGreen);
-                        Terminal.Color(System.Drawing.Color.LightGreen);
-                    }
-                    int dx = 0;
-                    for (int i = 0; i < x; i++)
-                    {
-                        dx += this.WordsTable[y][i].Length;
-                    }
-
-                    if (y < TableHeight / 2)
-                        Terminal.Print(0 + dx, y + 4, item);
-                    else
-                        Terminal.Print(20 + dx, y + 4 - TableHeight / 2, item);
-
-
-                    x++;
-                }
-
-
-
-            }
-            Terminal.Refresh();
-            Terminal.Set("window: title=" + "'" + this.Cursor.ToString() + "'");
-        }
-        public void MoveCursor(int dx, int dy)
-        {
-            this.Cursor.X += dx;
-            this.Cursor.Y += dy;
-            this.Cursor.Y = Tor(0, TableHeight - 1, this.Cursor.Y);
-            if (this.Cursor.X < 1)
-            {
-                this.Cursor.Y -= 16;
-                this.Cursor.Y = Tor(0, TableHeight - 1, this.Cursor.Y);
-                this.Cursor.X = this.WordsTable[this.Cursor.Y].Count() - 1;
-            }
-            else
-            if (this.Cursor.X >= this.WordsTable[this.Cursor.Y].Count())
-            {
-                this.Cursor.Y += 16;
-                this.Cursor.X = 1;
-            }
-            this.Cursor.Y = Tor(0, TableHeight - 1, this.Cursor.Y);
-            this.Cursor.X = Tor(1, this.WordsTable[this.Cursor.Y].Count(), this.Cursor.X);
-        }
-    }
     //vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
     class HackGame
     {
@@ -170,6 +29,8 @@ namespace terminalhack
 
         private static readonly string TrashChars = "!\"#$%&\'()*+/:;<=>?@[\\]^_{|}";
         private static readonly string Brackets = "<>[]{}()";
+        private static readonly string OpenBrackets = "<[{(";
+        private static readonly string CloseBrackets = ">]})";
         private System.Drawing.Point Cursor = new System.Drawing.Point(0, 0);
         private int CursorFlat = 0;
         private int CursorWordIndex = 0;
@@ -226,7 +87,7 @@ namespace terminalhack
             int i = 0;
             foreach (var Word in this.WordsTable)
             {
-                this.WordsTableRanges.Add(new KeyValuePair<int, int>(i, Word.Length-1));
+                this.WordsTableRanges.Add(new KeyValuePair<int, int>(i, i+Word.Length - 1));
                 i += Word.Length;
             }
         }
@@ -255,7 +116,7 @@ namespace terminalhack
 
             while (this.WordsTable.Count() + ((this.PasswordLength - 1) * this.WordCount) < DumpHeight * DumpWidth)
             {
-                this.WordsTable.Insert(rnd.Next(this.WordsTable.Count()+1), TrashChars[rnd.Next(TrashChars.Count())].ToString());//заполняет таблицу мусором
+                this.WordsTable.Insert(rnd.Next(this.WordsTable.Count() + 1), TrashChars[rnd.Next(TrashChars.Count())].ToString());//заполняет таблицу мусором
             }
 
             for (int i = 0; i < DumpHeight; i++)
@@ -266,25 +127,51 @@ namespace terminalhack
             WordsTableRangesFill();
 
         }
-        
+
         public Boolean CheckWord()
         {
-            
+            KeyValuePair<int, int> CursorBlock = new KeyValuePair<int, int>(
+                (int)(this.CursorFlat / 12) * 12,
+                (int)(this.CursorFlat / 12) * 12 + 1);
+
+            if (OpenBrackets.Contains(this.WordsTable[CursorWordIndex]))
+            {
+                int i = CursorBlock.Key;
+                while (false)
+                {
+
+                    i++;
+                }
+            }
             return false;
         }
         public void ShowFrame()
         {
             int i = 0;
+            int CurrentWordIndex = 0;
             foreach (var Word in this.WordsTable)
             {
+                if (this.CursorWordIndex == CurrentWordIndex)
+                {
+                    Terminal.Color(System.Drawing.Color.DarkGreen);
+                    Terminal.BkColor(System.Drawing.Color.LightGreen);
+                }
+                else
+                {
+                    Terminal.BkColor(System.Drawing.Color.DarkGreen);
+                    Terminal.Color(System.Drawing.Color.LightGreen);
+                }
+
                 foreach (var Char in Word)
                 {
                     if ((int)(i / DumpWidth) < DumpHeight / 2)
-                        Terminal.Print((int)(i % DumpWidth) + 7, (int)(i / DumpWidth) + (TerminalHeight-DumpHeight/2), Char.ToString() == "]" || Char.ToString() == "[" ? Char.ToString() + Char.ToString() : Char.ToString().ToUpper());
+                        Terminal.Print((int)(i % DumpWidth) + 7, (int)(i / DumpWidth) + (TerminalHeight - DumpHeight / 2), Char.ToString() == "]" || Char.ToString() == "[" ? Char.ToString() + Char.ToString() : Char.ToString().ToUpper());
                     else
                         Terminal.Print((int)(i % DumpWidth) + 20 + 7, (int)(i / DumpWidth) + (TerminalHeight - DumpHeight / 2) - DumpHeight / 2, Char.ToString() == "]" || Char.ToString() == "[" ? Char.ToString() + Char.ToString() : Char.ToString().ToUpper());
                     i++;
                 }
+
+                CurrentWordIndex++;
             }
             i = 0;
             foreach (var Address in HexAddresses)
@@ -296,8 +183,8 @@ namespace terminalhack
                 i++;
             }
             Terminal.Print(0, 0, "robco industries (tm) termlink protocol\nвведите пароль\n\n4 попытки осталось: x x x x".ToUpper());
-            Terminal.Print(40, (TerminalHeight - 1), ">"+this.Password.ToUpper());
-            
+            Terminal.Print(40, (TerminalHeight - 1), ">" + this.Password.ToUpper());
+
             Terminal.Refresh();
         }
         private static int FlatteringCursor(System.Drawing.Point CursorPoint)
@@ -306,9 +193,11 @@ namespace terminalhack
         }
         public void MoveCursor(System.Drawing.Point MoveVector)
         {
-            this.Cursor.X += MoveVector.X;
+            this.Cursor.X += MoveVector.X*this.WordsTable[this.CursorWordIndex].Length;
+            this.Cursor.X = Tor(0, DumpWidth - 1, this.Cursor.X);
             this.Cursor.Y += MoveVector.Y;
-            this.CursorFlat = FlatteringCursor(Cursor);
+            this.Cursor.X = Tor(0, DumpHeight - 1, this.Cursor.Y);
+            this.CursorFlat = FlatteringCursor(this.Cursor);
             CursorWordIndexMath();
         }
         public void MoveToCursor(System.Drawing.Point MovePoint)
@@ -334,6 +223,21 @@ namespace terminalhack
             qwe.ShowFrame();
             Terminal.Read();
 
+            while (Terminal.HasInput() ? Terminal.Read() != Terminal.TK_CLOSE : true)
+            {
+                int dx = 0;
+                int dy = 0;
+                //if (Terminal.HasInput())
+                {
+                    int TK = Terminal.Read();
+                    //Terminal.Set("window: title=" + "'" + Terminal.Peek().ToString() + "'");
+                    dx = TK == Terminal.TK_LEFT ? -1 : TK == Terminal.TK_RIGHT ? 1 : 0;
+                    dy = TK == Terminal.TK_UP ? -1 : TK == Terminal.TK_DOWN ? 1 : 0;
+                }
+                qwe.MoveCursor(new System.Drawing.Point(dx,dy));
+                qwe.ShowFrame();
+            }
+            /*
             string hexValue = 27.ToString("X");
             int decValue = int.Parse(hexValue, System.Globalization.NumberStyles.HexNumber);
 
@@ -373,7 +277,7 @@ namespace terminalhack
                 hg.MoveCursor(dx, dy);
                 hg.ShowWordsTable();
             }
-
+            */
             Terminal.Close();
         }
     }
