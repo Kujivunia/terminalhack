@@ -155,16 +155,16 @@ namespace terminalhack
     {
         private Random rnd = new Random();
 
-        private static readonly int DampHeight = 32;
-        private static readonly int DampWidth = 12;
+        private static readonly int DumpHeight = 32;
+        private static readonly int DumpWidth = 12;
 
-        private static readonly int OffsetInc = DampWidth;
+        private static readonly int OffsetInc = DumpWidth;
         private static readonly int OffsetMin = 4096;
         private static readonly int OffsetMax = 65150;
         private int OffsetStart = 0;
 
-        private static readonly int TerminalHeight = 25;
-        private static readonly int TerminalWidth = 80;
+        private static readonly int TerminalHeight = 21;//25
+        private static readonly int TerminalWidth = 64;//80
 
 
 
@@ -176,10 +176,11 @@ namespace terminalhack
         private int PasswordLength = 0;
         private int BracketCount = 0;
         private int WordCount = 0;
-        private List<string> WordsTable = new List<string>(DampHeight * DampWidth);
-        private List<KeyValuePair<int, int>> WordsTableRanges = new List<KeyValuePair<int, int>>(DampHeight * DampWidth);
+        private List<string> WordsTable = new List<string>(DumpHeight * DumpWidth);
+        private List<KeyValuePair<int, int>> WordsTableRanges = new List<KeyValuePair<int, int>>(DumpHeight * DumpWidth);
         private List<string> WordsDict = new List<string>();
         private List<string> HexAddresses = new List<string>();
+        private List<string> IOLog = new List<string>();
         private string Password;
         private static int Tor(int a, int b, int c)
         {
@@ -230,100 +231,68 @@ namespace terminalhack
             }
             this.Password = this.WordsTable[rnd.Next(this.WordCount)];
 
-            while (this.WordsTable.Count() + ((this.PasswordLength - 1) * this.WordCount) < DampHeight * DampWidth)
+            while (this.WordsTable.Count() + ((this.PasswordLength - 1) * this.WordCount) < DumpHeight * DumpWidth)
             {
                 this.WordsTable.Insert(rnd.Next(this.WordsTable.Count()+1), TrashChars[rnd.Next(TrashChars.Count())].ToString());//заполняет таблицу мусором
             }
 
-            for (int i = 0; i < DampHeight; i++)
+            for (int i = 0; i < DumpHeight; i++)
             {
                 this.HexAddresses.Add("0x" + (this.OffsetStart + OffsetInc * i).ToString("X"));
             }
 
         }
-        public void ShowWordsTable()
+        public Boolean CheckWord()
+        {
+
+            return false;
+        }
+        public void ShowFrame()
         {
             int i = 0;
             foreach (var Word in this.WordsTable)
             {
                 foreach (var Char in Word)
                 {
-                    if ((int)(i / DampWidth) < DampHeight / 2)
-                        Terminal.Print((int)(i % DampWidth) + 7, (int)(i / DampWidth) + 9, Char.ToString() == "]" || Char.ToString() == "[" ? Char.ToString() + Char.ToString() : Char.ToString().ToUpper());
+                    if ((int)(i / DumpWidth) < DumpHeight / 2)
+                        Terminal.Print((int)(i % DumpWidth) + 7, (int)(i / DumpWidth) + (TerminalHeight-DumpHeight/2), Char.ToString() == "]" || Char.ToString() == "[" ? Char.ToString() + Char.ToString() : Char.ToString().ToUpper());
                     else
-                        Terminal.Print((int)(i % DampWidth) + 20 + 7, (int)(i / DampWidth) + 9 - DampHeight / 2, Char.ToString() == "]" || Char.ToString() == "[" ? Char.ToString() + Char.ToString() : Char.ToString().ToUpper());
+                        Terminal.Print((int)(i % DumpWidth) + 20 + 7, (int)(i / DumpWidth) + (TerminalHeight - DumpHeight / 2) - DumpHeight / 2, Char.ToString() == "]" || Char.ToString() == "[" ? Char.ToString() + Char.ToString() : Char.ToString().ToUpper());
                     i++;
                 }
             }
             i = 0;
             foreach (var Address in HexAddresses)
             {
-                if (i < DampHeight / 2)
-                    Terminal.Print(0, (int)(i) + 9, Address.ToString());
+                if (i < DumpHeight / 2)
+                    Terminal.Print(0, (int)(i) + (TerminalHeight - DumpHeight / 2), Address.ToString());
                 else
-                    Terminal.Print(20, (int)(i) + 9 - DampHeight / 2, Address.ToString());
+                    Terminal.Print(20, (int)(i) + (TerminalHeight - DumpHeight / 2) - DumpHeight / 2, Address.ToString());
                 i++;
             }
-            Terminal.Print(40, 24, "PASSWORD: "+this.Password.ToUpper());
-            /*
-            for (int y = 0; y < DampHeight; y++)
-            {
-                int x = 0;
-
-                foreach (var item in this.WordsTable[y])
-                {
-                    if (x == this.Cursor.X && y == this.Cursor.Y)
-                    {
-                        Terminal.Color(System.Drawing.Color.DarkGreen);
-                        Terminal.BkColor(System.Drawing.Color.LightGreen);
-                    }
-                    else
-                    {
-                        Terminal.BkColor(System.Drawing.Color.DarkGreen);
-                        Terminal.Color(System.Drawing.Color.LightGreen);
-                    }
-                    int dx = 0;
-                    for (int i = 0; i < x; i++)
-                    {
-                        //dx += this.WordsTable[y][i].Length;
-                    }
-
-                    if (y < DampHeight / 2)
-                        Terminal.Print(0 + dx, y + 4, item);
-                    else
-                        Terminal.Print(20 + dx, y + 4 - DampHeight / 2, item);
-
-
-                    x++;
-                }
-
-
-
-            }
-            */
+            Terminal.Print(0, 0, "robco industries (tm) termlink protocol\nвведите пароль\n\n4 попытки осталось: x x x x".ToUpper());
+            Terminal.Print(40, (TerminalHeight - 1), ">"+this.Password.ToUpper());
+            
             Terminal.Refresh();
-            //Terminal.Set("window: title=" + "'" + this.Cursor.ToString() + "'");
         }
-        public void MoveCursor(int dx, int dy)
+        private static int FlatteringCursor(System.Drawing.Point CursorPoint)
         {
-            this.Cursor.X += dx;
-            this.Cursor.Y += dy;
-            this.Cursor.Y = Tor(0, DampHeight - 1, this.Cursor.Y);
-            if (this.Cursor.X < 1)
-            {
-                this.Cursor.Y -= 16;
-                this.Cursor.Y = Tor(0, DampHeight - 1, this.Cursor.Y);
-                this.Cursor.X = this.WordsTable[this.Cursor.Y].Count() - 1;
-            }
-            else
-            if (this.Cursor.X >= this.WordsTable[this.Cursor.Y].Count())
-            {
-                this.Cursor.Y += 16;
-                this.Cursor.X = 1;
-            }
-            this.Cursor.Y = Tor(0, DampHeight - 1, this.Cursor.Y);
-            this.Cursor.X = Tor(1, this.WordsTable[this.Cursor.Y].Count(), this.Cursor.X);
+            return (DumpWidth * CursorPoint.Y + CursorPoint.X);
         }
+        public void MoveCursor(System.Drawing.Point MoveVector)
+        {
+            this.Cursor.X += MoveVector.X;
+            this.Cursor.Y += MoveVector.Y;
+            this.CursorFlat = FlatteringCursor(Cursor);
+        }
+        public void MoveToCursor(System.Drawing.Point MovePoint)
+        {
+            this.Cursor.X = MovePoint.X;
+            this.Cursor.Y = MovePoint.Y;
+            this.CursorFlat = FlatteringCursor(Cursor);
+        }
+
+
     }
     //^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
     class Programm
@@ -335,7 +304,7 @@ namespace terminalhack
             List<string> WordsDictionary = JsonConvert.DeserializeObject<List<string>>(json).Where(item => item.Length >= 4 && item.Length <= 12).ToList();
             HackGame qwe = new HackGame(WordsDictionary);
             qwe.GenerateWordsTable();
-            qwe.ShowWordsTable();
+            qwe.ShowFrame();
             Terminal.Read();
 
             string hexValue = 27.ToString("X");
