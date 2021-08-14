@@ -81,18 +81,28 @@ namespace terminalhack
             Terminal.Clear();
             Terminal.Refresh();
         }
-        private KeyValuePair<int,int> SearchSecretCombinations(int StartSearchIndex)
+        private KeyValuePair<int, int> SearchSecretCombinations(int StartSearchWordIndex)
         {
-            KeyValuePair<int, int> result = new KeyValuePair<int, int>(StartSearchIndex, StartSearchIndex);
-            int EndSearchIndex = (int)(StartSearchIndex / DumpWidth) * DumpWidth + 1;
-            for (int i = StartSearchIndex; i < StartSearchIndex + DumpWidth; i++)
+            KeyValuePair<int, int> result = new KeyValuePair<int, int>(StartSearchWordIndex, StartSearchWordIndex);
+            int OpenBracketType = OpenBrackets.IndexOf(this.WordsTable[StartSearchWordIndex]);
+            for (int i = StartSearchWordIndex; i < (((StartSearchWordIndex + DumpWidth)>=this.WordsTable.Count())? this.WordsTable.Count()-1: StartSearchWordIndex + DumpWidth); i++)
             {
-                if (EndSearchIndex >= this.WordsTableRanges[i].Key && EndSearchIndex <= this.WordsTableRanges[i].Value)
+                if (this.WordsTable[i].Length > 1)
                 {
-                    EndSearchIndex = i;
+                    result = new KeyValuePair<int, int>(StartSearchWordIndex, StartSearchWordIndex);
+                    break;
+                }
+                if (this.WordsTable[i].Equals(CloseBrackets[OpenBracketType].ToString()))
+                {
+                    result = new KeyValuePair<int, int>(StartSearchWordIndex, i);
                     break;
                 }
             }
+
+
+            //хуйня какая-то я запутался давай по новой
+            //1) Функция поиска такого сочетания. Она принимает в себя индекс начала поиска, а возвращает индекс начала и конца сочетания.
+            //2) В функции выделения добавляется проверка на InRange(Функция поиска(индекс встретившейся открывающей скобочки))
 
             return result;
         }
@@ -102,7 +112,7 @@ namespace terminalhack
             int i = 0;
             foreach (var Word in this.WordsTable)
             {
-                this.WordsTableRanges.Add(new KeyValuePair<int, int>(i, i+Word.Length - 1));
+                this.WordsTableRanges.Add(new KeyValuePair<int, int>(i, i + Word.Length - 1));
                 i += Word.Length;
             }
         }
@@ -172,9 +182,15 @@ namespace terminalhack
         {
             int i = 0;
             int CurrentWordIndex = 0;
+            KeyValuePair<int, int> SecretCombination = new KeyValuePair<int, int>();
             foreach (var Word in this.WordsTable)
             {
-                if (this.CursorWordIndex == CurrentWordIndex)
+                if (OpenBrackets.Contains(Word) && CurrentWordIndex > SecretCombination.Value)
+                {
+                    SecretCombination = SearchSecretCombinations(CurrentWordIndex);
+
+                }
+                if (this.CursorWordIndex == CurrentWordIndex || (this.CursorWordIndex == SecretCombination.Key && SecretCombination.Key != SecretCombination.Value && (CurrentWordIndex >= SecretCombination.Key && CurrentWordIndex <= SecretCombination.Value)))
                 {
                     Terminal.Color(System.Drawing.Color.DarkGreen);
                     Terminal.BkColor(System.Drawing.Color.LightGreen);
@@ -184,7 +200,6 @@ namespace terminalhack
                     Terminal.BkColor(System.Drawing.Color.DarkGreen);
                     Terminal.Color(System.Drawing.Color.LightGreen);
                 }
-
                 foreach (var Char in Word)
                 {
                     if ((int)(i / DumpWidth) < DumpHeight / 2)
@@ -216,7 +231,7 @@ namespace terminalhack
         }
         public void MoveCursor(System.Drawing.Point MoveVector)
         {
-            this.Cursor.X += MoveVector.X*this.WordsTable[this.CursorWordIndex].Length;
+            this.Cursor.X += MoveVector.X * this.WordsTable[this.CursorWordIndex].Length;
             this.Cursor.X = Tor(0, DumpWidth - 1, this.Cursor.X);
             this.Cursor.Y += MoveVector.Y;//ДОДЕЛАТЬ СИСТЕМУ КУРСОРА ГОВНА 
             this.Cursor.Y = Tor(0, DumpHeight - 1, this.Cursor.Y);
@@ -258,10 +273,10 @@ namespace terminalhack
                     dy = TK == Terminal.TK_UP ? -1 : TK == Terminal.TK_DOWN ? 1 : 0;
                     if (TK == Terminal.TK_ENTER || TK == Terminal.TK_SPACE || TK == Terminal.TK_E)
                     {
-                        Terminal.Set("window: title=" + "'" + "Парола: " +((qwe.CheckWord() == 8) ? "верная":"неверная") + "'"); 
+                        Terminal.Set("window: title=" + "'" + "Парола: " + ((qwe.CheckWord() == 8) ? "верная" : "неверная") + "'");
                     }
                 }
-                qwe.MoveCursor(new System.Drawing.Point(dx,dy));
+                qwe.MoveCursor(new System.Drawing.Point(dx, dy));
                 qwe.ShowFrame();
             }
             /*
