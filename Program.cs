@@ -43,6 +43,7 @@ namespace terminalhack
         private List<string> WordsDict = new List<string>();
         private List<string> HexAddresses = new List<string>();
         private List<string> IOLog = new List<string>();
+        //private List<int>
         private string Password;
         private static int Tor(int a, int b, int c)
         {
@@ -99,10 +100,11 @@ namespace terminalhack
                 }
             }
 
+            if ((int)(this.WordsTableRanges[result.Key].Key/DumpWidth) != (int)(this.WordsTableRanges[result.Value].Key / DumpWidth))
+            {
+                result = new KeyValuePair<int, int>(StartSearchWordIndex, StartSearchWordIndex);
+            }
 
-            //хуйня какая-то я запутался давай по новой
-            //1) Функция поиска такого сочетания. Она принимает в себя индекс начала поиска, а возвращает индекс начала и конца сочетания.
-            //2) В функции выделения добавляется проверка на InRange(Функция поиска(индекс встретившейся открывающей скобочки))
 
             return result;
         }
@@ -182,13 +184,14 @@ namespace terminalhack
         {
             int i = 0;
             int CurrentWordIndex = 0;
+            bool SecretCombinationsActive = false;
             KeyValuePair<int, int> SecretCombination = new KeyValuePair<int, int>();
             foreach (var Word in this.WordsTable)
             {
-                if (OpenBrackets.Contains(Word) && CurrentWordIndex > SecretCombination.Value)
+                if (OpenBrackets.Contains(Word) && !(SecretCombinationsActive))
                 {
                     SecretCombination = SearchSecretCombinations(CurrentWordIndex);
-
+                    SecretCombinationsActive = true;
                 }
                 if (this.CursorWordIndex == CurrentWordIndex || (this.CursorWordIndex == SecretCombination.Key && SecretCombination.Key != SecretCombination.Value && (CurrentWordIndex >= SecretCombination.Key && CurrentWordIndex <= SecretCombination.Value)))
                 {
@@ -197,6 +200,7 @@ namespace terminalhack
                 }
                 else
                 {
+                    SecretCombinationsActive = false;
                     Terminal.BkColor(System.Drawing.Color.DarkGreen);
                     Terminal.Color(System.Drawing.Color.LightGreen);
                 }
@@ -212,6 +216,8 @@ namespace terminalhack
                 CurrentWordIndex++;
             }
             i = 0;
+            Terminal.BkColor(System.Drawing.Color.DarkGreen);
+            Terminal.Color(System.Drawing.Color.LightGreen);
             foreach (var Address in HexAddresses)
             {
                 if (i < DumpHeight / 2)
@@ -232,9 +238,24 @@ namespace terminalhack
         public void MoveCursor(System.Drawing.Point MoveVector)
         {
             this.Cursor.X += MoveVector.X * this.WordsTable[this.CursorWordIndex].Length;
-            this.Cursor.X = Tor(0, DumpWidth - 1, this.Cursor.X);
-            this.Cursor.Y += MoveVector.Y;//ДОДЕЛАТЬ СИСТЕМУ КУРСОРА ГОВНА 
-            this.Cursor.Y = Tor(0, DumpHeight - 1, this.Cursor.Y);
+            this.Cursor.Y += MoveVector.Y;//ДОДЕЛАТЬ СИСТЕМУ КУРСОРА ГОВНА
+
+            if (this.Cursor.X >= DumpWidth && this.Cursor.Y < DumpHeight / 2)
+            {
+                this.Cursor.Y = this.Cursor.Y + DumpHeight / 2;
+                this.Cursor.X = 0;
+            } else
+            if (this.Cursor.X < 0 && this.Cursor.Y >= DumpHeight / 2)
+            {
+                this.Cursor.Y = this.Cursor.Y - DumpHeight / 2;
+                this.Cursor.X = DumpHeight;
+            }
+            //this.Cursor.X = Tor(0, DumpWidth - 1, this.Cursor.X);
+            this.Cursor.Y = this.Cursor.Y < 0 ? 0 : this.Cursor.Y;
+            this.Cursor.Y = this.Cursor.Y >= DumpHeight ? DumpHeight - 1 : this.Cursor.Y;
+
+            this.Cursor.X = this.Cursor.X < 0 ? 0 : this.Cursor.X;
+            this.Cursor.X = this.Cursor.X >= DumpWidth ? DumpWidth - 1 : this.Cursor.X;
             this.CursorFlat = FlatteringCursor(this.Cursor);
             CursorWordIndexMath();
         }
