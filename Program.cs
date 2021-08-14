@@ -172,6 +172,7 @@ namespace terminalhack
         private static readonly string Brackets = "<>[]{}()";
         private System.Drawing.Point Cursor = new System.Drawing.Point(0, 0);
         private int CursorFlat = 0;
+        private int CursorWordIndex = 0;
 
         private int PasswordLength = 0;
         private int BracketCount = 0;
@@ -220,6 +221,27 @@ namespace terminalhack
             Terminal.Refresh();
         }
 
+        private void WordsTableRangesFill()
+        {
+            int i = 0;
+            foreach (var Word in this.WordsTable)
+            {
+                this.WordsTableRanges.Add(new KeyValuePair<int, int>(i, Word.Length-1));
+                i += Word.Length;
+            }
+        }
+        private void CursorWordIndexMath()
+        {
+            int index = 0;
+            for (int i = 0; i < this.WordsTableRanges.Count; i++)
+            {
+                if (this.CursorFlat >= this.WordsTableRanges[i].Key && this.CursorFlat <= this.WordsTableRanges[i].Value)
+                {
+                    index = i;
+                }
+            }
+            this.CursorWordIndex = index;
+        }
         public void GenerateWordsTable()
         {
             for (int i = 0; i < this.WordCount; i++)//заполняет таблицу паролями
@@ -241,10 +263,13 @@ namespace terminalhack
                 this.HexAddresses.Add("0x" + (this.OffsetStart + OffsetInc * i).ToString("X"));
             }
 
+            WordsTableRangesFill();
+
         }
+        
         public Boolean CheckWord()
         {
-
+            
             return false;
         }
         public void ShowFrame()
@@ -284,12 +309,14 @@ namespace terminalhack
             this.Cursor.X += MoveVector.X;
             this.Cursor.Y += MoveVector.Y;
             this.CursorFlat = FlatteringCursor(Cursor);
+            CursorWordIndexMath();
         }
         public void MoveToCursor(System.Drawing.Point MovePoint)
         {
             this.Cursor.X = MovePoint.X;
             this.Cursor.Y = MovePoint.Y;
             this.CursorFlat = FlatteringCursor(Cursor);
+            CursorWordIndexMath();
         }
 
 
