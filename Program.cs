@@ -25,7 +25,7 @@ namespace terminalhack
         private static readonly int TerminalHeight = 21;//25
         private static readonly int TerminalWidth = 64;//80
 
-
+        private int Attempts = 4;
 
         private static readonly string TrashChars = "!\"#$%&\'()*+/:;<=>?@[\\]^_{|}";
         private static readonly string Brackets = "<>[]{}()";
@@ -163,12 +163,15 @@ namespace terminalhack
 
             if (OpenBrackets.Contains(this.WordsTable[CursorWordIndex]))
             {
-                int i = CursorBlock.Key;
-                while (false)
+                if (this.rnd.Next(100)<75)
                 {
-
-                    i++;
+                    this.Attempts = 4;
                 }
+                else
+                {
+                    //удалить заглушку
+                }
+                this.WordsTable[CursorWordIndex] = this.WordsTable[CursorWordIndex] + "\u0000";
             }
             else
             {
