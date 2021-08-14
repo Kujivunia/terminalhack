@@ -81,6 +81,21 @@ namespace terminalhack
             Terminal.Clear();
             Terminal.Refresh();
         }
+        private KeyValuePair<int,int> SearchSecretCombinations(int StartSearchIndex)
+        {
+            KeyValuePair<int, int> result = new KeyValuePair<int, int>(StartSearchIndex, StartSearchIndex);
+            int EndSearchIndex = (int)(StartSearchIndex / DumpWidth) * DumpWidth + 1;
+            for (int i = StartSearchIndex; i < StartSearchIndex + DumpWidth; i++)
+            {
+                if (EndSearchIndex >= this.WordsTableRanges[i].Key && EndSearchIndex <= this.WordsTableRanges[i].Value)
+                {
+                    EndSearchIndex = i;
+                    break;
+                }
+            }
+
+            return result;
+        }
 
         private void WordsTableRangesFill()
         {
@@ -128,11 +143,11 @@ namespace terminalhack
 
         }
 
-        public Boolean CheckWord()
+        public int CheckWord()
         {
             KeyValuePair<int, int> CursorBlock = new KeyValuePair<int, int>(
-                (int)(this.CursorFlat / 12) * 12,
-                (int)(this.CursorFlat / 12) * 12 + 1);
+                (int)(this.CursorFlat / DumpWidth) * DumpWidth,
+                (int)(this.CursorFlat / DumpWidth) * DumpWidth + 1);
 
             if (OpenBrackets.Contains(this.WordsTable[CursorWordIndex]))
             {
@@ -143,7 +158,15 @@ namespace terminalhack
                     i++;
                 }
             }
-            return false;
+            else
+            {
+                if (this.WordsTable[CursorWordIndex].Equals(this.Password))
+                {
+                    return this.PasswordLength;
+                }
+            }
+
+            return 0;
         }
         public void ShowFrame()
         {
@@ -195,8 +218,8 @@ namespace terminalhack
         {
             this.Cursor.X += MoveVector.X*this.WordsTable[this.CursorWordIndex].Length;
             this.Cursor.X = Tor(0, DumpWidth - 1, this.Cursor.X);
-            this.Cursor.Y += MoveVector.Y;
-            this.Cursor.X = Tor(0, DumpHeight - 1, this.Cursor.Y);
+            this.Cursor.Y += MoveVector.Y;//ДОДЕЛАТЬ СИСТЕМУ КУРСОРА ГОВНА 
+            this.Cursor.Y = Tor(0, DumpHeight - 1, this.Cursor.Y);
             this.CursorFlat = FlatteringCursor(this.Cursor);
             CursorWordIndexMath();
         }
@@ -233,6 +256,10 @@ namespace terminalhack
                     //Terminal.Set("window: title=" + "'" + Terminal.Peek().ToString() + "'");
                     dx = TK == Terminal.TK_LEFT ? -1 : TK == Terminal.TK_RIGHT ? 1 : 0;
                     dy = TK == Terminal.TK_UP ? -1 : TK == Terminal.TK_DOWN ? 1 : 0;
+                    if (TK == Terminal.TK_ENTER || TK == Terminal.TK_SPACE || TK == Terminal.TK_E)
+                    {
+                        Terminal.Set("window: title=" + "'" + "Парола: " +((qwe.CheckWord() == 8) ? "верная":"неверная") + "'"); 
+                    }
                 }
                 qwe.MoveCursor(new System.Drawing.Point(dx,dy));
                 qwe.ShowFrame();
