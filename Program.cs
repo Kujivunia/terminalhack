@@ -213,12 +213,14 @@ namespace terminalhack
             {
                 this.Duds.Add(Dud);
             }
+
             this.WordsTable.Insert(rnd.Next(this.WordsTable.Count + 1), this.Password);
 
             for (int i = 0; i < this.WordCount - 1; i++)
             {
-                this.WordsTable.Insert(rnd.Next(this.WordsTable.Count() + 1), TrashChars[rnd.Next(TrashChars.Count())].ToString());
+                this.WordsTable.Insert(rnd.Next(this.WordCount), TrashChars[rnd.Next(TrashChars.Count())].ToString());
             }
+
             while (this.WordsTable.Count() + ((this.PasswordLength - 1) * this.WordCount) < DumpHeight * DumpWidth)
             {
                 this.WordsTable.Insert(rnd.Next(this.WordsTable.Count() + 1), TrashChars[rnd.Next(TrashChars.Count())].ToString());//заполняет таблицу мусором
@@ -230,7 +232,6 @@ namespace terminalhack
             }
 
             WordsTableRangesFill();
-
         }
         //! Проверки парола. Нужно прикрутить определение числа совпадающих букв, это просто. 
         //! Удаление скобочных комбинаций. 
@@ -244,11 +245,17 @@ namespace terminalhack
             this.Attempts--;
             if (OpenBrackets.Contains(this.WordsTable[CursorWordIndex]) && SearchSecretCombinations(CursorWordIndex).Key != SearchSecretCombinations(CursorWordIndex).Value)
             {
+                string BracketCombination = "";
+                for (int i = SearchSecretCombinations(CursorWordIndex).Key; i <= SearchSecretCombinations(CursorWordIndex).Value; i++)
+                {
+                    BracketCombination += this.WordsTable[i];
+                }
+                this.IOLog.Add(">" + BracketCombination);
                 UsedBracketsIndex.Add(UsedBracketsIndexFind(CursorWordIndex));
                 if (this.rnd.Next(100) < 50)
                 {
                     this.Attempts = 4;
-                    this.IOLog.Add(">" + this.WordsTable[CursorWordIndex]);
+                    
                     this.IOLog.Add(">" + "Пользование");
                     this.IOLog.Add(">" + "вновь разрешено.");
                     return -1;
@@ -265,7 +272,6 @@ namespace terminalhack
                     }
                     this.WordsTableRangesFill();
                     this.Attempts++;
-                    this.IOLog.Add(">" + this.WordsTable[CursorWordIndex]);
                     this.IOLog.Add(">" + "Заглушка убрана.");
                     return -2;
                 }
@@ -491,9 +497,23 @@ namespace terminalhack
             if (this.Attempts == 2) Terminal.Print(0, 0, "robco industries (tm) termlink protocol\nвведите пароль\n\n2 попытки осталось: ▚[+]▞ ▚[+]▞".ToUpper());
             if (this.Attempts == 1) Terminal.Print(0, 0, "robco industries (tm) termlink protocol\nвведите пароль\n\n1 попытка осталась: ▚[+]▞".ToUpper());
             if (this.Attempts < 1) Terminal.Print(0, 0, "robco industries (tm) termlink protocol\nвведите пароль\n\n0 попыток осталось:".ToUpper());
-            Terminal.Print(DumpWidth * 2 + 12 + 4, (TerminalHeight - 1), ">" + this.WordsTable[this.CursorWordIndex].ToUpper());
 
-            for (int d = 0; d < this.IOLog.Count(); d++)
+            if (OpenBrackets.Contains(this.WordsTable[this.CursorWordIndex]))
+            {
+                string Combination = "";
+                for (int c = SearchSecretCombinations(this.CursorWordIndex).Key; c <= SearchSecretCombinations(this.CursorWordIndex).Value; c++)
+                {
+                    Combination += this.WordsTable[c];
+                }
+                Terminal.Print(DumpWidth * 2 + 12 + 4, (TerminalHeight - 1), ">" + Combination.ToUpper());
+            }
+            else
+            {
+                Terminal.Print(DumpWidth * 2 + 12 + 4, (TerminalHeight - 1), ">" + this.WordsTable[this.CursorWordIndex].ToUpper());
+            }
+            
+
+            for (int d = this.IOLog.Count()- DumpHeight / 2 < 0?0: this.IOLog.Count() - DumpHeight/2; d < this.IOLog.Count(); d++)
             {
                 Terminal.Print(DumpWidth * 2 + 12 + 4, TerminalHeight - this.IOLog.Count() + d - 2, this.IOLog[d]);
             }
@@ -533,8 +553,8 @@ namespace terminalhack
         }
         public void MoveToCursor(System.Drawing.Point MovePoint)
         {
-            if (MovePoint.X<=7 || MovePoint.X >= 39 || MovePoint.Y < (TerminalHeight - DumpHeight / 2)) return;
-            if (MovePoint.X>7 && MovePoint.X < 19)
+            if (MovePoint.X<7 || MovePoint.X >= 39 || MovePoint.Y < (TerminalHeight - DumpHeight / 2)) return;
+            if (MovePoint.X>=7 && MovePoint.X < 19)
             {
                 this.Cursor.X = MovePoint.X - 7;
                 this.Cursor.Y = MovePoint.Y - (TerminalHeight - DumpHeight / 2);
@@ -578,13 +598,13 @@ namespace terminalhack
                     //Terminal.Set("window: title=" + "'" + Terminal.Peek().ToString() + "'");
                     dx = TK == Terminal.TK_LEFT ? -1 : TK == Terminal.TK_RIGHT ? 1 : 0;
                     dy = TK == Terminal.TK_UP ? -1 : TK == Terminal.TK_DOWN ? 1 : 0;
-
+                    qwe.MoveCursor(new System.Drawing.Point(dx, dy));
                     if (TK == Terminal.TK_BACKSPACE)
                     {
                         qwe = new HackGame(WordsDictionary);
                         qwe.GenerateWordsTable();
                     }
-                    if (TK == Terminal.TK_ESCAPE)
+                    if (TK == Terminal.TK_ESCAPE || TK == Terminal.TK_CLOSE)
                     {
                         Terminal.Close();
                     }
@@ -592,7 +612,8 @@ namespace terminalhack
                     {
                         mx = Terminal.State(Terminal.TK_MOUSE_X);
                         my = Terminal.State(Terminal.TK_MOUSE_Y);
-                        qwe.MoveCursor(new System.Drawing.Point(dx, dy));
+                        
+                        if (mx >= 0 && my >= 0) qwe.MoveToCursor(new System.Drawing.Point(mx, my));
                     }
                     if (TK == Terminal.TK_ENTER || TK == Terminal.TK_SPACE || TK == Terminal.TK_E || TK == Terminal.TK_MOUSE_LEFT)
                     {
@@ -602,7 +623,7 @@ namespace terminalhack
 
                 }
                 
-                if (mx >= 0 && my >= 0) qwe.MoveToCursor(new System.Drawing.Point(mx, my));
+                
                 qwe.ShowFrame();
             }
             /*
