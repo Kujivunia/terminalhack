@@ -130,6 +130,7 @@ namespace terminalhack
             }
             this.CursorWordIndex = index;
         }
+        //! Доработать систему генерации игрового поля. (сейчас есть ошибки генерации, и параметры генерации вроде слишком не такие, как в играх беседки). 
         public void GenerateWordsTable()
         {
             for (int i = 0; i < this.WordCount; i++)//заполняет таблицу паролями
@@ -154,14 +155,17 @@ namespace terminalhack
             WordsTableRangesFill();
 
         }
-
+        //! Проверки парола. Нужно прикрутить определение числа совпадающих букв, это просто. 
+        //! Удаление скобочных комбинаций. 
+        //! Активация скобочных комбинаций. Удаление заглушек
+        //! Вывода истории ввода -- пока не делал, но уже примерно знаю, как это сделать. 
         public int CheckWord()
         {
             KeyValuePair<int, int> CursorBlock = new KeyValuePair<int, int>(
                 (int)(this.CursorFlat / DumpWidth) * DumpWidth,
                 (int)(this.CursorFlat / DumpWidth) * DumpWidth + 1);
 
-            if (OpenBrackets.Contains(this.WordsTable[CursorWordIndex]))
+            if (OpenBrackets.Contains(this.WordsTable[CursorWordIndex]))//добавить проверку на комбинацию, а именно if SearchSecretCombinations(CurrentWordIndex).key != value
             {
                 if (this.rnd.Next(100)<75)
                 {
@@ -171,7 +175,7 @@ namespace terminalhack
                 {
                     //удалить заглушку
                 }
-                this.WordsTable[CursorWordIndex] = this.WordsTable[CursorWordIndex] + "\u0000";
+                //код на деактивацию открывающей скобочки
             }
             else
             {
@@ -183,6 +187,8 @@ namespace terminalhack
 
             return 0;
         }
+        //! (бонусная задача) Сделать вывод а-ля fallout, т.е. буквы выводятся по очереди (у меня весь кадр формируется целиком и выводится сразу). 
+
         public void ShowFrame()
         {
             int i = 0;
@@ -290,8 +296,9 @@ namespace terminalhack
                 int dx = 0;
                 int dy = 0;
                 //if (Terminal.HasInput())
-                {
-                    int TK = Terminal.Read();
+                //! (бонусная задача) Добавить звуки. 
+                {//! Сделать нормальное приложение вокруг механики игры. А именно, починить управление (сейчас работает лишь частично). 
+                    int TK = Terminal.Read(); //! Управление мышкой.  
                     //Terminal.Set("window: title=" + "'" + Terminal.Peek().ToString() + "'");
                     dx = TK == Terminal.TK_LEFT ? -1 : TK == Terminal.TK_RIGHT ? 1 : 0;
                     dy = TK == Terminal.TK_UP ? -1 : TK == Terminal.TK_DOWN ? 1 : 0;
