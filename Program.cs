@@ -199,7 +199,7 @@ namespace terminalhack
         public void GenerateWordsTable()
         {
             this.Password = this.WordsDict[rnd.Next(this.WordsDict.Count)];
-            for (int i = 0; i < this.WordCount; i++)//заполняет таблицу паролями
+            for (int i = 0; i < this.WordCount-1; i++)//заполняет таблицу паролями
             {
                 int j = rnd.Next(this.WordsDict.Count);
                 do
@@ -221,7 +221,7 @@ namespace terminalhack
                 this.WordsTable.Insert(rnd.Next(this.WordCount), TrashChars[rnd.Next(TrashChars.Count())].ToString());
             }
 
-            while (this.WordsTable.Count() + ((this.PasswordLength - 1) * this.WordCount) < DumpHeight * DumpWidth)
+            while (this.WordsTable.Count() + ((this.PasswordLength-1) * this.WordCount) < DumpHeight * DumpWidth)
             {
                 this.WordsTable.Insert(rnd.Next(this.WordsTable.Count() + 1), TrashChars[rnd.Next(TrashChars.Count())].ToString());//заполняет таблицу мусором
             }

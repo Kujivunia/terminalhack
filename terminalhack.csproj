@@ -5,7 +5,7 @@
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
     <ProjectGuid>{CC681E17-08EC-44C0-B8CB-E12E98C97E8F}</ProjectGuid>
-    <OutputType>WinExe</OutputType>
+    <OutputType>Exe</OutputType>
     <RootNamespace>terminalhack</RootNamespace>
     <AssemblyName>terminalhack</AssemblyName>
     <TargetFrameworkVersion>v4.8</TargetFrameworkVersion>
