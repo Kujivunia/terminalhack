@@ -47,6 +47,8 @@ namespace terminalhack
         private string Password;
         private List<string> Duds = new List<string>();
         private bool BlockScreen = false;
+        private bool UnlockScreen = false;
+        private bool Unlock = false;
         private static int Tor(int a, int b, int c)
         {
             int result = 0;
@@ -64,7 +66,7 @@ namespace terminalhack
         }
         private int WordBulls(string foo, string bar)
         {
-            if (foo.Length != bar.Length) return -1;
+            if (foo.Length != bar.Length) return 0;
             int Bulls = 0;
             for (int i = 0; i < foo.Length; i++)
             {
@@ -246,43 +248,62 @@ namespace terminalhack
                 if (this.rnd.Next(100) < 50)
                 {
                     this.Attempts = 4;
+                    this.IOLog.Add(">" + this.WordsTable[CursorWordIndex]);
+                    this.IOLog.Add(">" + "Пользование");
+                    this.IOLog.Add(">" + "вновь разрешено.");
                     return -1;
                 }
                 else
                 {
-                    
                     int DudToRemoveIndex = this.rnd.Next(this.Duds.Count);
                     int RemovedDudIndex = this.WordsTable.IndexOf(this.Duds[DudToRemoveIndex]);
                     this.Duds.RemoveAt(DudToRemoveIndex);
                     this.WordsTable[RemovedDudIndex] = ".";
-                    for (int i = 0; i < PasswordLength-1; i++)
+                    for (int i = 0; i < PasswordLength - 1; i++)
                     {
-                        this.WordsTable.Insert(RemovedDudIndex,".");
+                        this.WordsTable.Insert(RemovedDudIndex, ".");
                     }
                     this.WordsTableRangesFill();
                     this.Attempts++;
+                    this.IOLog.Add(">" + this.WordsTable[CursorWordIndex]);
+                    this.IOLog.Add(">" + "Заглушка убрана.");
                     return -2;
-                    //удалить заглушку
                 }
 
             }
+            else if (this.WordsTable[CursorWordIndex].Equals(this.Password))
+            {
+                this.IOLog.Add(">" + this.WordsTable[CursorWordIndex].ToUpper());
+                this.IOLog.Add(">" + "Точно!");
+                this.IOLog.Add(">" + "Пожалуйста,");
+                this.IOLog.Add(">" + "подождите");
+                this.IOLog.Add(">" + "входа в систему.");
+                this.Unlock = true;
+                return this.PasswordLength;
+            }
+            else if (this.WordsTable[CursorWordIndex].Length == this.PasswordLength)
+            {
+
+                int Bulls = 0;
+                for (int i = 0; i < this.Password.Length; i++)
+                {
+                    Bulls += this.Password[i] == this.WordsTable[CursorWordIndex][i] ? 1 : 0;//готово
+                }
+                this.IOLog.Add(">" + this.WordsTable[CursorWordIndex].ToUpper());
+                this.IOLog.Add(">" + "Отказ в доступе.");
+                this.IOLog.Add(">" + Bulls + "/" + this.PasswordLength + " правильно.");
+                return Bulls;
+            }
             else
             {
-                if (this.WordsTable[CursorWordIndex].Equals(this.Password))
-                {
-                    return this.PasswordLength;
-                }
-                else if (this.WordsTable[CursorWordIndex].Length == this.PasswordLength)
-                {
+                this.IOLog.Add(">" + this.WordsTable[CursorWordIndex]);
+                this.IOLog.Add(">" + "Отказ в доступе.");
+                this.IOLog.Add(">" + this.WordBulls(this.Password, this.WordsTable[CursorWordIndex]) + "/" + this.PasswordLength + " правильно.");
+            }
 
-                    int Bulls = 0;
-                    for (int i = 0; i < this.Password.Length; i++)
-                    {
-                        Bulls += this.Password[i] == this.WordsTable[CursorWordIndex][i] ? 1 : 0;//готово
-                    }
-
-                    return Bulls;
-                }
+            if (this.Attempts < 1)
+            {
+                this.IOLog.Add(">" + "Блокировка начата.");
             }
 
             return 0;
@@ -291,8 +312,80 @@ namespace terminalhack
 
         public void ShowFrame()
         {
+            //////////////////////////////////////////////////////////////
+            if (this.Unlock && !this.UnlockScreen)
+            {
+                for (int frame = 0; frame < TerminalHeight; frame++)
+                {
+                    Terminal.BkColor(System.Drawing.Color.DarkGreen);
+                    Terminal.Color(System.Drawing.Color.LightGreen);
+                    for (int y = 0; y < TerminalHeight; y++)
+                    {
+                        for (int x = 0; x < TerminalWidth; x++)
+                        {
+                            Terminal.Layer(0);
+                            var foo = Terminal.Pick(x, y + 1);
+                            Terminal.Layer(1);
+                            Terminal.Put(x, y, foo);
 
+                        }
+                        Terminal.Delay(1);
+                    }
+                    Terminal.Layer(0);
+                    Terminal.ClearArea(0, 0, TerminalWidth, TerminalHeight);
+                    Terminal.Refresh();
 
+                    for (int y = 0; y < TerminalHeight; y++)
+                    {
+                        for (int x = 0; x < TerminalWidth; x++)
+                        {
+                            Terminal.Layer(1);
+                            var foo = Terminal.Pick(x, y);
+                            Terminal.Layer(0);
+                            Terminal.Put(x, y, foo);
+
+                        }
+                    }
+                }
+                Terminal.BkColor(System.Drawing.Color.DarkGreen);
+                Terminal.Color(System.Drawing.Color.LightGreen);
+                Terminal.Clear();
+
+                Terminal.Print(0, 0, "welcome to robco industries (tm) termlink".ToUpper());
+                Terminal.Refresh();
+                for (int x = 0; x < "> logon admin".Length; x++)
+                {
+                    Terminal.Put(x, 2, "> logon admin".ToUpper()[x]);
+                    Terminal.Refresh();
+                    Terminal.Delay(rnd.Next(35,88));
+                }
+                Terminal.Print(0, 4, "введите пароль".ToUpper());
+                Terminal.Refresh();
+                string pass = "> "; for (int x = 0; x < 2 + this.PasswordLength; x++) pass += "*";
+                for (int x = 0; x < pass.Length; x++)
+                {
+                    Terminal.Put(x, 6, pass[x]);
+                    Terminal.Refresh();
+                    Terminal.Delay(rnd.Next(35, 88));
+                }
+                Terminal.Refresh();
+                this.UnlockScreen = true;
+                return;
+            }
+            if (this.UnlockScreen)
+            {
+                Terminal.BkColor(System.Drawing.Color.DarkGreen);
+                Terminal.Color(System.Drawing.Color.LightGreen);
+                Terminal.Clear();
+                Terminal.Print(0, 0, "welcome to robco industries (tm) termlink".ToUpper());
+                Terminal.Print(0, 2, "> logon admin".ToUpper());
+                Terminal.Print(0, 4, "введите пароль".ToUpper());
+                string pass = "> "; for (int x = 0; x < 2 + this.PasswordLength; x++) pass += "*";
+                Terminal.Print(0, 6, pass.ToUpper());
+                Terminal.Refresh();
+                return;
+            }
+            ////////////////////////////////////////////////////////
             if (TerminalBlocked() && !this.BlockScreen)
             {
                 for (int frame = 0; frame < TerminalHeight; frame++)
@@ -346,6 +439,7 @@ namespace terminalhack
                 Terminal.Refresh();
                 return;
             }
+
             Terminal.Clear();
             int i = 0;
             int CurrentWordIndex = 0;
@@ -391,12 +485,18 @@ namespace terminalhack
                     Terminal.Print(20, (int)(i) + (TerminalHeight - DumpHeight / 2) - DumpHeight / 2, Address.ToString());
                 i++;
             }
-            if (this.Attempts == 4) Terminal.Print(0, 0, "robco industries (tm) termlink protocol\nвведите пароль\n\n4 попытки осталось: x x x x".ToUpper());
-            if (this.Attempts == 3) Terminal.Print(0, 0, "robco industries (tm) termlink protocol\nвведите пароль\n\n3 попытки осталось: x x x".ToUpper());
-            if (this.Attempts == 2) Terminal.Print(0, 0, "robco industries (tm) termlink protocol\nвведите пароль\n\n2 попытки осталось: x x".ToUpper());
-            if (this.Attempts == 1) Terminal.Print(0, 0, "robco industries (tm) termlink protocol\nвведите пароль\n\n1 попытка осталась: x".ToUpper());
+
+            if (this.Attempts == 4) Terminal.Print(0, 0, "robco industries (tm) termlink protocol\nвведите пароль\n\n4 попытки осталось: ▚[+]▞ ▚[+]▞ ▚[+]▞ ▚[+]▞".ToUpper());//\u25FC
+            if (this.Attempts == 3) Terminal.Print(0, 0, "robco industries (tm) termlink protocol\nвведите пароль\n\n3 попытки осталось: ▚[+]▞ ▚[+]▞ ▚[+]▞".ToUpper());
+            if (this.Attempts == 2) Terminal.Print(0, 0, "robco industries (tm) termlink protocol\nвведите пароль\n\n2 попытки осталось: ▚[+]▞ ▚[+]▞".ToUpper());
+            if (this.Attempts == 1) Terminal.Print(0, 0, "robco industries (tm) termlink protocol\nвведите пароль\n\n1 попытка осталась: ▚[+]▞".ToUpper());
             if (this.Attempts < 1) Terminal.Print(0, 0, "robco industries (tm) termlink protocol\nвведите пароль\n\n0 попыток осталось:".ToUpper());
-            Terminal.Print(40, (TerminalHeight - 1), ">" + this.Password.ToUpper());
+            Terminal.Print(DumpWidth * 2 + 12 + 4, (TerminalHeight - 1), ">" + this.WordsTable[this.CursorWordIndex].ToUpper());
+
+            for (int d = 0; d < this.IOLog.Count(); d++)
+            {
+                Terminal.Print(DumpWidth * 2 + 12 + 4, TerminalHeight - this.IOLog.Count() + d - 2, this.IOLog[d]);
+            }
 
             Terminal.Refresh();
 
@@ -433,8 +533,19 @@ namespace terminalhack
         }
         public void MoveToCursor(System.Drawing.Point MovePoint)
         {
-            this.Cursor.X = MovePoint.X;
-            this.Cursor.Y = MovePoint.Y - (TerminalHeight - DumpHeight);//! Перевод координат окна в координаты Dump
+            if (MovePoint.X<=7 || MovePoint.X >= 39 || MovePoint.Y < (TerminalHeight - DumpHeight / 2)) return;
+            if (MovePoint.X>7 && MovePoint.X < 19)
+            {
+                this.Cursor.X = MovePoint.X - 7;
+                this.Cursor.Y = MovePoint.Y - (TerminalHeight - DumpHeight / 2);
+            }
+            if (MovePoint.X > 26 && MovePoint.X < 39)
+            {
+                this.Cursor.X = MovePoint.X - 27;
+                this.Cursor.Y = MovePoint.Y - (TerminalHeight - DumpHeight / 2) + DumpHeight / 2;
+            }
+
+            //! Перевод координат окна в координаты Dump
             this.CursorFlat = FlatteringCursor(Cursor);
             CursorWordIndexMath();
         }
@@ -467,11 +578,7 @@ namespace terminalhack
                     //Terminal.Set("window: title=" + "'" + Terminal.Peek().ToString() + "'");
                     dx = TK == Terminal.TK_LEFT ? -1 : TK == Terminal.TK_RIGHT ? 1 : 0;
                     dy = TK == Terminal.TK_UP ? -1 : TK == Terminal.TK_DOWN ? 1 : 0;
-                    if (TK == Terminal.TK_ENTER || TK == Terminal.TK_SPACE || TK == Terminal.TK_E)
-                    {
-                        int Bulls = qwe.CheckWord();
-                        //Terminal.Set("window: title=" + "'" + "Парола: " + ((Bulls == 8) ? "верная" : "неверная") + " " + Bulls + "'");
-                    }
+
                     if (TK == Terminal.TK_BACKSPACE)
                     {
                         qwe = new HackGame(WordsDictionary);
@@ -481,15 +588,20 @@ namespace terminalhack
                     {
                         Terminal.Close();
                     }
-                    if (TK == Terminal.TK_MOUSE_CLICKS || TK == Terminal.TK_MOUSE_LEFT)
+                    if (TK == Terminal.TK_MOUSE_MOVE)
                     {
                         mx = Terminal.State(Terminal.TK_MOUSE_X);
                         my = Terminal.State(Terminal.TK_MOUSE_Y);
-                        //Terminal.Set("window: title=" + "'" + "mx: " + mx + " my: " + my + "'");
+                        qwe.MoveCursor(new System.Drawing.Point(dx, dy));
+                    }
+                    if (TK == Terminal.TK_ENTER || TK == Terminal.TK_SPACE || TK == Terminal.TK_E || TK == Terminal.TK_MOUSE_LEFT)
+                    {
+                        int Bulls = qwe.CheckWord();
+                        //Terminal.Set("window: title=" + "'" + "Парола: " + ((Bulls == 8) ? "верная" : "неверная") + " " + Bulls + "'");
                     }
 
                 }
-                qwe.MoveCursor(new System.Drawing.Point(dx, dy));
+                
                 if (mx >= 0 && my >= 0) qwe.MoveToCursor(new System.Drawing.Point(mx, my));
                 qwe.ShowFrame();
             }
