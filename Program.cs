@@ -44,8 +44,9 @@ namespace terminalhack
         private List<string> HexAddresses = new List<string>();
         private List<string> IOLog = new List<string>();
         private List<int> UsedBracketsIndex = new List<int>();
-        //private List<int>
         private string Password;
+        private List<string> Duds = new List<string>();
+        private bool BlockScreen = false;
         private static int Tor(int a, int b, int c)
         {
             int result = 0;
@@ -60,6 +61,17 @@ namespace terminalhack
             }
             result = c;
             return result;
+        }
+        private int WordBulls(string foo, string bar)
+        {
+            if (foo.Length != bar.Length) return -1;
+            int Bulls = 0;
+            for (int i = 0; i < foo.Length; i++)
+            {
+                Bulls += foo[i] == bar[i] ? 1 : 0;//готово
+            }
+
+            return Bulls;
         }
         private int UsedBracketsIndexFind(int WordIndex = -1, int BracketIndex = -1)
         {
@@ -127,7 +139,7 @@ namespace terminalhack
             }
 
             int OpenBracketType = OpenBrackets.IndexOf(this.WordsTable[StartSearchWordIndex]);
-            for (int i = StartSearchWordIndex; i < (((StartSearchWordIndex + DumpWidth) >= this.WordsTable.Count()) ? this.WordsTable.Count() - 1 : StartSearchWordIndex + DumpWidth); i++)
+            for (int i = StartSearchWordIndex; i < (((StartSearchWordIndex + DumpWidth) >= this.WordsTable.Count()) ? this.WordsTable.Count() : StartSearchWordIndex + DumpWidth); i++)
             {
                 if (this.WordsTable[i].Length > 1)
                 {
@@ -154,12 +166,21 @@ namespace terminalhack
         private void WordsTableRangesFill()
         {
             int i = 0;
+            this.WordsTableRanges = new List<KeyValuePair<int, int>>();
             foreach (var Word in this.WordsTable)
             {
                 this.WordsTableRanges.Add(new KeyValuePair<int, int>(i, i + Word.Length - 1));
                 i += Word.Length;
             }
         }
+        public bool TerminalBlocked()
+        {
+            if (this.Attempts < 1)
+                return true;
+            else
+                return false;
+        }
+
         private void CursorWordIndexMath()
         {
             int index = 0;
@@ -175,15 +196,27 @@ namespace terminalhack
         //! Доработать систему генерации игрового поля. (сейчас есть ошибки генерации, и параметры генерации вроде слишком не такие, как в играх беседки). 
         public void GenerateWordsTable()
         {
+            this.Password = this.WordsDict[rnd.Next(this.WordsDict.Count)];
             for (int i = 0; i < this.WordCount; i++)//заполняет таблицу паролями
             {
-                var j = rnd.Next(this.WordsDict.Count);
-                while (this.WordsTable.Contains(this.WordsDict[j]))
+                int j = rnd.Next(this.WordsDict.Count);
+                do
+                {
                     j = rnd.Next(this.WordsDict.Count);
+                } while (this.WordsTable.Contains(this.WordsDict[j]) || WordBulls(this.Password, this.WordsDict[j]) < 1);
+
                 this.WordsTable.Add(this.WordsDict[j]);
             }
-            this.Password = this.WordsTable[rnd.Next(this.WordCount)];
+            foreach (var Dud in this.WordsTable)
+            {
+                this.Duds.Add(Dud);
+            }
+            this.WordsTable.Insert(rnd.Next(this.WordsTable.Count + 1), this.Password);
 
+            for (int i = 0; i < this.WordCount - 1; i++)
+            {
+                this.WordsTable.Insert(rnd.Next(this.WordsTable.Count() + 1), TrashChars[rnd.Next(TrashChars.Count())].ToString());
+            }
             while (this.WordsTable.Count() + ((this.PasswordLength - 1) * this.WordCount) < DumpHeight * DumpWidth)
             {
                 this.WordsTable.Insert(rnd.Next(this.WordsTable.Count() + 1), TrashChars[rnd.Next(TrashChars.Count())].ToString());//заполняет таблицу мусором
@@ -206,7 +239,7 @@ namespace terminalhack
             KeyValuePair<int, int> CursorBlock = new KeyValuePair<int, int>(
                 (int)(this.CursorFlat / DumpWidth) * DumpWidth,
                 (int)(this.CursorFlat / DumpWidth) * DumpWidth + 1);
-
+            this.Attempts--;
             if (OpenBrackets.Contains(this.WordsTable[CursorWordIndex]) && SearchSecretCombinations(CursorWordIndex).Key != SearchSecretCombinations(CursorWordIndex).Value)
             {
                 UsedBracketsIndex.Add(UsedBracketsIndexFind(CursorWordIndex));
@@ -214,14 +247,24 @@ namespace terminalhack
                 {
                     this.Attempts = 4;
                     return -1;
-                } else
+                }
+                else
                 {
-
-
+                    
+                    int DudToRemoveIndex = this.rnd.Next(this.Duds.Count);
+                    int RemovedDudIndex = this.WordsTable.IndexOf(this.Duds[DudToRemoveIndex]);
+                    this.Duds.RemoveAt(DudToRemoveIndex);
+                    this.WordsTable[RemovedDudIndex] = ".";
+                    for (int i = 0; i < PasswordLength-1; i++)
+                    {
+                        this.WordsTable.Insert(RemovedDudIndex,".");
+                    }
+                    this.WordsTableRangesFill();
+                    this.Attempts++;
                     return -2;
                     //удалить заглушку
                 }
-                
+
             }
             else
             {
@@ -231,13 +274,14 @@ namespace terminalhack
                 }
                 else if (this.WordsTable[CursorWordIndex].Length == this.PasswordLength)
                 {
-                    int diff = 0;
+
+                    int Bulls = 0;
                     for (int i = 0; i < this.Password.Length; i++)
                     {
-                        diff += this.Password[i] == this.WordsTable[CursorWordIndex][i] ? 1 : 0;//готово
+                        Bulls += this.Password[i] == this.WordsTable[CursorWordIndex][i] ? 1 : 0;//готово
                     }
 
-                    return diff;
+                    return Bulls;
                 }
             }
 
@@ -247,6 +291,62 @@ namespace terminalhack
 
         public void ShowFrame()
         {
+
+
+            if (TerminalBlocked() && !this.BlockScreen)
+            {
+                for (int frame = 0; frame < TerminalHeight; frame++)
+                {
+                    Terminal.BkColor(System.Drawing.Color.DarkGreen);
+                    Terminal.Color(System.Drawing.Color.LightGreen);
+                    for (int y = 0; y < TerminalHeight; y++)
+                    {
+                        for (int x = 0; x < TerminalWidth; x++)
+                        {
+                            Terminal.Layer(0);
+                            var foo = Terminal.Pick(x, y + 1);
+                            Terminal.Layer(1);
+                            Terminal.Put(x, y, foo);
+
+                        }
+                        Terminal.Delay(1);
+                    }
+                    Terminal.Layer(0);
+                    Terminal.ClearArea(0, 0, TerminalWidth, TerminalHeight);
+                    Terminal.Refresh();
+
+                    for (int y = 0; y < TerminalHeight; y++)
+                    {
+                        for (int x = 0; x < TerminalWidth; x++)
+                        {
+                            Terminal.Layer(1);
+                            var foo = Terminal.Pick(x, y);
+                            Terminal.Layer(0);
+                            Terminal.Put(x, y, foo);
+
+                        }
+                    }
+                }
+                Terminal.BkColor(System.Drawing.Color.DarkGreen);
+                Terminal.Color(System.Drawing.Color.LightGreen);
+                Terminal.Clear();
+                Terminal.Print(TerminalWidth / 2 - "терминал заблокирован".Length / 2, TerminalHeight / 2 - 1, "терминал заблокирован".ToUpper());
+                Terminal.Print(TerminalWidth / 2 - "пожалуйста, свяжитесь с администратором".Length / 2, TerminalHeight / 2 + 1, "пожалуйста, свяжитесь с администратором".ToUpper());
+                Terminal.Refresh();
+                this.BlockScreen = true;
+                return;
+            }
+            if (this.BlockScreen)
+            {
+                Terminal.BkColor(System.Drawing.Color.DarkGreen);
+                Terminal.Color(System.Drawing.Color.LightGreen);
+                Terminal.Clear();
+                Terminal.Print(TerminalWidth / 2 - "терминал заблокирован".Length / 2, TerminalHeight / 2 - 1, "терминал заблокирован".ToUpper());
+                Terminal.Print(TerminalWidth / 2 - "пожалуйста, свяжитесь с администратором".Length / 2, TerminalHeight / 2 + 1, "пожалуйста, свяжитесь с администратором".ToUpper());
+                Terminal.Refresh();
+                return;
+            }
+            Terminal.Clear();
             int i = 0;
             int CurrentWordIndex = 0;
             bool SecretCombinationsActive = false;
@@ -291,10 +391,16 @@ namespace terminalhack
                     Terminal.Print(20, (int)(i) + (TerminalHeight - DumpHeight / 2) - DumpHeight / 2, Address.ToString());
                 i++;
             }
-            Terminal.Print(0, 0, "robco industries (tm) termlink protocol\nвведите пароль\n\n4 попытки осталось: x x x x".ToUpper());
+            if (this.Attempts == 4) Terminal.Print(0, 0, "robco industries (tm) termlink protocol\nвведите пароль\n\n4 попытки осталось: x x x x".ToUpper());
+            if (this.Attempts == 3) Terminal.Print(0, 0, "robco industries (tm) termlink protocol\nвведите пароль\n\n3 попытки осталось: x x x".ToUpper());
+            if (this.Attempts == 2) Terminal.Print(0, 0, "robco industries (tm) termlink protocol\nвведите пароль\n\n2 попытки осталось: x x".ToUpper());
+            if (this.Attempts == 1) Terminal.Print(0, 0, "robco industries (tm) termlink protocol\nвведите пароль\n\n1 попытка осталась: x".ToUpper());
+            if (this.Attempts < 1) Terminal.Print(0, 0, "robco industries (tm) termlink protocol\nвведите пароль\n\n0 попыток осталось:".ToUpper());
             Terminal.Print(40, (TerminalHeight - 1), ">" + this.Password.ToUpper());
 
             Terminal.Refresh();
+
+
         }
         private static int FlatteringCursor(System.Drawing.Point CursorPoint)
         {
@@ -346,7 +452,7 @@ namespace terminalhack
             HackGame qwe = new HackGame(WordsDictionary);
             qwe.GenerateWordsTable();
             qwe.ShowFrame();
-            Terminal.Read();
+            //Terminal.Read();
             Terminal.Set("input.filter = [keyboard, mouse]");
             while (Terminal.HasInput() ? Terminal.Read() != Terminal.TK_CLOSE : true)
             {
@@ -363,14 +469,23 @@ namespace terminalhack
                     dy = TK == Terminal.TK_UP ? -1 : TK == Terminal.TK_DOWN ? 1 : 0;
                     if (TK == Terminal.TK_ENTER || TK == Terminal.TK_SPACE || TK == Terminal.TK_E)
                     {
-                        Terminal.Set("window: title=" + "'" + "Парола: " + ((qwe.CheckWord() == 8) ? "верная" : "неверная") + " " + qwe.CheckWord() + "'");
+                        int Bulls = qwe.CheckWord();
+                        //Terminal.Set("window: title=" + "'" + "Парола: " + ((Bulls == 8) ? "верная" : "неверная") + " " + Bulls + "'");
                     }
-
+                    if (TK == Terminal.TK_BACKSPACE)
+                    {
+                        qwe = new HackGame(WordsDictionary);
+                        qwe.GenerateWordsTable();
+                    }
+                    if (TK == Terminal.TK_ESCAPE)
+                    {
+                        Terminal.Close();
+                    }
                     if (TK == Terminal.TK_MOUSE_CLICKS || TK == Terminal.TK_MOUSE_LEFT)
                     {
                         mx = Terminal.State(Terminal.TK_MOUSE_X);
                         my = Terminal.State(Terminal.TK_MOUSE_Y);
-                        Terminal.Set("window: title=" + "'" + "mx: " + mx + " my: " + my + "'");
+                        //Terminal.Set("window: title=" + "'" + "mx: " + mx + " my: " + my + "'");
                     }
 
                 }
