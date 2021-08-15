@@ -43,6 +43,7 @@ namespace terminalhack
         private List<string> WordsDict = new List<string>();
         private List<string> HexAddresses = new List<string>();
         private List<string> IOLog = new List<string>();
+        private List<int> UsedBracketsIndex = new List<int>();
         //private List<int>
         private string Password;
         private static int Tor(int a, int b, int c)
@@ -60,7 +61,38 @@ namespace terminalhack
             result = c;
             return result;
         }
+        private int UsedBracketsIndexFind(int WordIndex = -1, int BracketIndex = -1)
+        {
+            int result = 0;
+            if (BracketIndex == -1)
+            {
+                for (int i = 0; i < WordIndex + 1; i++)
+                {
+                    if (OpenBrackets.Contains(this.WordsTable[i]))
+                    {
+                        result++;
+                    }
 
+                }
+            }
+            else if (WordIndex == -1)
+            {
+                for (int i = 0; i < WordIndex + 1; i++)
+                {
+                    if (OpenBrackets.Contains(this.WordsTable[i]))
+                    {
+                        result++;
+                    }
+                    if (result == BracketIndex)
+                    {
+                        result = i;
+                        break;
+                    }
+                }
+            }
+
+            return result;
+        }
         public HackGame(List<string> WordsList, int TerminalLevel = 2, int ScienceSkillLevel = 50, int LuckyLevel = 5)
         {
             this.OffsetStart = rnd.Next(OffsetMin, OffsetMax);
@@ -85,8 +117,17 @@ namespace terminalhack
         private KeyValuePair<int, int> SearchSecretCombinations(int StartSearchWordIndex)
         {
             KeyValuePair<int, int> result = new KeyValuePair<int, int>(StartSearchWordIndex, StartSearchWordIndex);
+            int UsedBracketIndex = UsedBracketsIndexFind(StartSearchWordIndex);
+            foreach (var index in this.UsedBracketsIndex)
+            {
+                if (index == UsedBracketIndex)
+                {
+                    return result;
+                }
+            }
+
             int OpenBracketType = OpenBrackets.IndexOf(this.WordsTable[StartSearchWordIndex]);
-            for (int i = StartSearchWordIndex; i < (((StartSearchWordIndex + DumpWidth)>=this.WordsTable.Count())? this.WordsTable.Count()-1: StartSearchWordIndex + DumpWidth); i++)
+            for (int i = StartSearchWordIndex; i < (((StartSearchWordIndex + DumpWidth) >= this.WordsTable.Count()) ? this.WordsTable.Count() - 1 : StartSearchWordIndex + DumpWidth); i++)
             {
                 if (this.WordsTable[i].Length > 1)
                 {
@@ -100,10 +141,11 @@ namespace terminalhack
                 }
             }
 
-            if ((int)(this.WordsTableRanges[result.Key].Key/DumpWidth) != (int)(this.WordsTableRanges[result.Value].Key / DumpWidth))
+            if ((int)(this.WordsTableRanges[result.Key].Key / DumpWidth) != (int)(this.WordsTableRanges[result.Value].Key / DumpWidth))
             {
                 result = new KeyValuePair<int, int>(StartSearchWordIndex, StartSearchWordIndex);
             }
+
 
 
             return result;
@@ -165,23 +207,37 @@ namespace terminalhack
                 (int)(this.CursorFlat / DumpWidth) * DumpWidth,
                 (int)(this.CursorFlat / DumpWidth) * DumpWidth + 1);
 
-            if (OpenBrackets.Contains(this.WordsTable[CursorWordIndex]))//добавить проверку на комбинацию, а именно if SearchSecretCombinations(CurrentWordIndex).key != value
+            if (OpenBrackets.Contains(this.WordsTable[CursorWordIndex]) && SearchSecretCombinations(CursorWordIndex).Key != SearchSecretCombinations(CursorWordIndex).Value)
             {
-                if (this.rnd.Next(100)<75)
+                UsedBracketsIndex.Add(UsedBracketsIndexFind(CursorWordIndex));
+                if (this.rnd.Next(100) < 50)
                 {
                     this.Attempts = 4;
-                }
-                else
+                    return -1;
+                } else
                 {
+
+
+                    return -2;
                     //удалить заглушку
                 }
-                //код на деактивацию открывающей скобочки
+                
             }
             else
             {
                 if (this.WordsTable[CursorWordIndex].Equals(this.Password))
                 {
                     return this.PasswordLength;
+                }
+                else if (this.WordsTable[CursorWordIndex].Length == this.PasswordLength)
+                {
+                    int diff = 0;
+                    for (int i = 0; i < this.Password.Length; i++)
+                    {
+                        diff += this.Password[i] == this.WordsTable[CursorWordIndex][i] ? 1 : 0;//готово
+                    }
+
+                    return diff;
                 }
             }
 
@@ -253,7 +309,8 @@ namespace terminalhack
             {
                 this.Cursor.Y = this.Cursor.Y + DumpHeight / 2;
                 this.Cursor.X = 0;
-            } else
+            }
+            else
             if (this.Cursor.X < 0 && this.Cursor.Y >= DumpHeight / 2)
             {
                 this.Cursor.Y = this.Cursor.Y - DumpHeight / 2;
@@ -271,7 +328,7 @@ namespace terminalhack
         public void MoveToCursor(System.Drawing.Point MovePoint)
         {
             this.Cursor.X = MovePoint.X;
-            this.Cursor.Y = MovePoint.Y;
+            this.Cursor.Y = MovePoint.Y - (TerminalHeight - DumpHeight);//! Перевод координат окна в координаты Dump
             this.CursorFlat = FlatteringCursor(Cursor);
             CursorWordIndexMath();
         }
@@ -290,11 +347,13 @@ namespace terminalhack
             qwe.GenerateWordsTable();
             qwe.ShowFrame();
             Terminal.Read();
-
+            Terminal.Set("input.filter = [keyboard, mouse]");
             while (Terminal.HasInput() ? Terminal.Read() != Terminal.TK_CLOSE : true)
             {
                 int dx = 0;
                 int dy = 0;
+                int mx = -1;
+                int my = -1;
                 //if (Terminal.HasInput())
                 //! (бонусная задача) Добавить звуки. 
                 {//! Сделать нормальное приложение вокруг механики игры. А именно, починить управление (сейчас работает лишь частично). 
@@ -304,10 +363,19 @@ namespace terminalhack
                     dy = TK == Terminal.TK_UP ? -1 : TK == Terminal.TK_DOWN ? 1 : 0;
                     if (TK == Terminal.TK_ENTER || TK == Terminal.TK_SPACE || TK == Terminal.TK_E)
                     {
-                        Terminal.Set("window: title=" + "'" + "Парола: " + ((qwe.CheckWord() == 8) ? "верная" : "неверная") + "'");
+                        Terminal.Set("window: title=" + "'" + "Парола: " + ((qwe.CheckWord() == 8) ? "верная" : "неверная") + " " + qwe.CheckWord() + "'");
                     }
+
+                    if (TK == Terminal.TK_MOUSE_CLICKS || TK == Terminal.TK_MOUSE_LEFT)
+                    {
+                        mx = Terminal.State(Terminal.TK_MOUSE_X);
+                        my = Terminal.State(Terminal.TK_MOUSE_Y);
+                        Terminal.Set("window: title=" + "'" + "mx: " + mx + " my: " + my + "'");
+                    }
+
                 }
                 qwe.MoveCursor(new System.Drawing.Point(dx, dy));
+                if (mx >= 0 && my >= 0) qwe.MoveToCursor(new System.Drawing.Point(mx, my));
                 qwe.ShowFrame();
             }
             /*
