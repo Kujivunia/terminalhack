@@ -111,7 +111,7 @@ namespace terminalhack
         {
             this.OffsetStart = rnd.Next(OffsetMin, OffsetMax);
             this.PasswordLength = 4 + 2 * TerminalLevel;
-            this.WordCount = this.PasswordLength - rnd.Next(0, (int)(LuckyLevel / 2)) - (ScienceSkillLevel / 10);
+            this.WordCount = DumpWidth*2-this.PasswordLength - rnd.Next(0, (int)(LuckyLevel / 2)) - (ScienceSkillLevel / 10);
             this.WordCount = this.WordCount < 5 ? 5 : this.WordCount;
             this.BracketCount = 50 + LuckyLevel * 10;
 
@@ -199,7 +199,7 @@ namespace terminalhack
         public void GenerateWordsTable()
         {
             this.Password = this.WordsDict[rnd.Next(this.WordsDict.Count)];
-            for (int i = 0; i < this.WordCount-1; i++)//заполняет таблицу паролями
+            for (int i = 0; i < this.WordCount - 1; i++)//заполняет таблицу паролями
             {
                 int j = rnd.Next(this.WordsDict.Count);
                 do
@@ -216,12 +216,12 @@ namespace terminalhack
 
             this.WordsTable.Insert(rnd.Next(this.WordsTable.Count + 1), this.Password);
 
-            for (int i = 0; i < this.WordCount - 1; i++)
+            for (int i = this.WordCount-1; i >0; i--)
             {
-                this.WordsTable.Insert(rnd.Next(this.WordCount), TrashChars[rnd.Next(TrashChars.Count())].ToString());
+                this.WordsTable.Insert(i, TrashChars[rnd.Next(TrashChars.Count())].ToString());
             }
 
-            while (this.WordsTable.Count() + ((this.PasswordLength-1) * this.WordCount) < DumpHeight * DumpWidth)
+            while (this.WordsTable.Count() + ((this.PasswordLength - 1) * this.WordCount) < DumpHeight * DumpWidth)
             {
                 this.WordsTable.Insert(rnd.Next(this.WordsTable.Count() + 1), TrashChars[rnd.Next(TrashChars.Count())].ToString());//заполняет таблицу мусором
             }
@@ -255,7 +255,7 @@ namespace terminalhack
                 if (this.rnd.Next(100) < 50)
                 {
                     this.Attempts = 4;
-                    
+
                     this.IOLog.Add(">" + "Пользование");
                     this.IOLog.Add(">" + "вновь разрешено.");
                     return -1;
@@ -363,11 +363,11 @@ namespace terminalhack
                 {
                     Terminal.Put(x, 2, "> logon admin".ToUpper()[x]);
                     Terminal.Refresh();
-                    Terminal.Delay(rnd.Next(35,88));
+                    Terminal.Delay(rnd.Next(35, 88));
                 }
                 Terminal.Print(0, 4, "введите пароль".ToUpper());
                 Terminal.Refresh();
-                string pass = "> "; for (int x = 0; x < 2 + this.PasswordLength; x++) pass += "*";
+                string pass = "> "; for (int x = 0; x < this.PasswordLength; x++) pass += "*";
                 for (int x = 0; x < pass.Length; x++)
                 {
                     Terminal.Put(x, 6, pass[x]);
@@ -386,7 +386,7 @@ namespace terminalhack
                 Terminal.Print(0, 0, "welcome to robco industries (tm) termlink".ToUpper());
                 Terminal.Print(0, 2, "> logon admin".ToUpper());
                 Terminal.Print(0, 4, "введите пароль".ToUpper());
-                string pass = "> "; for (int x = 0; x < 2 + this.PasswordLength; x++) pass += "*";
+                string pass = "> "; for (int x = 0; x < this.PasswordLength; x++) pass += "*";
                 Terminal.Print(0, 6, pass.ToUpper());
                 Terminal.Refresh();
                 return;
@@ -511,9 +511,9 @@ namespace terminalhack
             {
                 Terminal.Print(DumpWidth * 2 + 12 + 4, (TerminalHeight - 1), ">" + this.WordsTable[this.CursorWordIndex].ToUpper());
             }
-            
 
-            for (int d = this.IOLog.Count()- DumpHeight / 2 < 0?0: this.IOLog.Count() - DumpHeight/2; d < this.IOLog.Count(); d++)
+
+            for (int d = this.IOLog.Count() - DumpHeight / 2 < 0 ? 0 : this.IOLog.Count() - DumpHeight / 2; d < this.IOLog.Count(); d++)
             {
                 Terminal.Print(DumpWidth * 2 + 12 + 4, TerminalHeight - this.IOLog.Count() + d - 2, this.IOLog[d]);
             }
@@ -528,7 +528,35 @@ namespace terminalhack
         }
         public void MoveCursor(System.Drawing.Point MoveVector)
         {
-            this.Cursor.X += MoveVector.X * this.WordsTable[this.CursorWordIndex].Length;
+            //this.Cursor.X += MoveVector.X * this.WordsTable[this.CursorWordIndex].Length;
+            if (MoveVector.X > 0)
+            {
+                //this.Cursor.X = this.WordsTableRanges[this.CursorWordIndex].Value % DumpWidth + 1;
+                if ((this.WordsTableRanges[this.CursorWordIndex].Value+1)/DumpWidth > this.CursorWordIndex/DumpWidth)
+                {
+                    this.Cursor.X = this.CursorWordIndex / DumpWidth+1;
+                }
+                else
+                {
+                    this.Cursor.X = this.WordsTableRanges[this.CursorWordIndex].Value % DumpWidth + 1;
+                }
+                
+                //this.Cursor.Y = (this.WordsTableRanges[this.CursorWordIndex].Value+1) / DumpWidth;
+            }
+            if (MoveVector.X < 0)
+            {
+                if ((this.WordsTableRanges[this.CursorWordIndex].Key - 1) / DumpWidth < this.CursorWordIndex / DumpWidth)
+                {
+                    this.Cursor.X = this.CursorWordIndex / DumpWidth-1;
+                }
+                else
+                {
+                    this.Cursor.X = this.WordsTableRanges[this.CursorWordIndex].Value % DumpWidth-1;
+                }
+                //this.Cursor.X = this.WordsTableRanges[this.CursorWordIndex].Key % 12 - 1;
+                //this.Cursor.Y = (this.WordsTableRanges[this.CursorWordIndex].Key - 1) / DumpWidth;
+            }
+            
             this.Cursor.Y += MoveVector.Y;//ДОДЕЛАТЬ СИСТЕМУ КУРСОРА ГОВНА
 
             if (this.Cursor.X >= DumpWidth && this.Cursor.Y < DumpHeight / 2)
@@ -553,8 +581,8 @@ namespace terminalhack
         }
         public void MoveToCursor(System.Drawing.Point MovePoint)
         {
-            if (MovePoint.X<7 || MovePoint.X >= 39 || MovePoint.Y < (TerminalHeight - DumpHeight / 2)) return;
-            if (MovePoint.X>=7 && MovePoint.X < 19)
+            if (MovePoint.X < 7 || MovePoint.X >= 39 || MovePoint.Y < (TerminalHeight - DumpHeight / 2)) return;
+            if (MovePoint.X >= 7 && MovePoint.X < 19)
             {
                 this.Cursor.X = MovePoint.X - 7;
                 this.Cursor.Y = MovePoint.Y - (TerminalHeight - DumpHeight / 2);
@@ -612,7 +640,7 @@ namespace terminalhack
                     {
                         mx = Terminal.State(Terminal.TK_MOUSE_X);
                         my = Terminal.State(Terminal.TK_MOUSE_Y);
-                        
+
                         if (mx >= 0 && my >= 0) qwe.MoveToCursor(new System.Drawing.Point(mx, my));
                     }
                     if (TK == Terminal.TK_ENTER || TK == Terminal.TK_SPACE || TK == Terminal.TK_E || TK == Terminal.TK_MOUSE_LEFT)
@@ -622,8 +650,8 @@ namespace terminalhack
                     }
 
                 }
-                
-                
+
+
                 qwe.ShowFrame();
             }
             /*
