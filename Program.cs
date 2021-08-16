@@ -273,6 +273,7 @@ namespace terminalhack
                         this.WordsTable.Insert(RemovedDudIndex, ".");
                     }
                     this.WordsTableRangesFill();
+                    this.CursorWordIndexMath();
                     this.Attempts++;
                     this.IOLog.Add(">" + "Заглушка убрана.");
                     return -2;
