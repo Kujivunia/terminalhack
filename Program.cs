@@ -513,7 +513,7 @@ namespace terminalhack
             }
 
 
-            for (int d = this.IOLog.Count() - DumpHeight / 2 < 0 ? 0 : this.IOLog.Count() - DumpHeight / 2; d < this.IOLog.Count(); d++)
+            for (int d = this.IOLog.Count() - DumpHeight / 2+2 < 0 ? 0 : this.IOLog.Count() - DumpHeight / 2+2; d < this.IOLog.Count(); d++)
             {
                 Terminal.Print(DumpWidth * 2 + 12 + 4, TerminalHeight - this.IOLog.Count() + d - 2, this.IOLog[d]);
             }
