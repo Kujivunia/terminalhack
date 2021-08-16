@@ -111,7 +111,7 @@ namespace terminalhack
         {
             this.OffsetStart = rnd.Next(OffsetMin, OffsetMax);
             this.PasswordLength = 4 + 2 * TerminalLevel;
-            this.WordCount = DumpWidth*2-this.PasswordLength - rnd.Next(0, (int)(LuckyLevel / 2)) - (ScienceSkillLevel / 10);
+            this.WordCount = DumpWidth * 2 - this.PasswordLength - rnd.Next(0, (int)(LuckyLevel / 2)) - (ScienceSkillLevel / 10);
             this.WordCount = this.WordCount < 5 ? 5 : this.WordCount;
             this.BracketCount = 50 + LuckyLevel * 10;
 
@@ -216,7 +216,7 @@ namespace terminalhack
 
             this.WordsTable.Insert(rnd.Next(this.WordsTable.Count + 1), this.Password);
 
-            for (int i = this.WordCount-1; i >0; i--)
+            for (int i = this.WordCount - 1; i > 0; i--)
             {
                 this.WordsTable.Insert(i, TrashChars[rnd.Next(TrashChars.Count())].ToString());
             }
@@ -243,12 +243,18 @@ namespace terminalhack
                 (int)(this.CursorFlat / DumpWidth) * DumpWidth,
                 (int)(this.CursorFlat / DumpWidth) * DumpWidth + 1);
             this.Attempts--;
+
             if (OpenBrackets.Contains(this.WordsTable[CursorWordIndex]) && SearchSecretCombinations(CursorWordIndex).Key != SearchSecretCombinations(CursorWordIndex).Value)
             {
                 string BracketCombination = "";
+
                 for (int i = SearchSecretCombinations(CursorWordIndex).Key; i <= SearchSecretCombinations(CursorWordIndex).Value; i++)
                 {
                     BracketCombination += this.WordsTable[i];
+                    if (BracketCombination[BracketCombination.Length - 1].ToString() == "[" || BracketCombination[BracketCombination.Length - 1].ToString() == "]")
+                    {
+                        BracketCombination += BracketCombination[BracketCombination.Length - 1];
+                    }
                 }
                 this.IOLog.Add(">" + BracketCombination);
                 UsedBracketsIndex.Add(UsedBracketsIndexFind(CursorWordIndex));
@@ -302,7 +308,15 @@ namespace terminalhack
             }
             else
             {
-                this.IOLog.Add(">" + this.WordsTable[CursorWordIndex]);
+                if (WordsTable[CursorWordIndex]=="]")
+                {
+                    this.IOLog.Add(">" + this.WordsTable[CursorWordIndex] + this.WordsTable[CursorWordIndex]);
+                }
+                else
+                {
+                    this.IOLog.Add(">" + this.WordsTable[CursorWordIndex]);
+                }
+
                 this.IOLog.Add(">" + "Отказ в доступе.");
                 this.IOLog.Add(">" + this.WordBulls(this.Password, this.WordsTable[CursorWordIndex]) + "/" + this.PasswordLength + " правильно.");
             }
@@ -498,14 +512,18 @@ namespace terminalhack
             if (this.Attempts == 1) Terminal.Print(0, 0, "robco industries (tm) termlink protocol\nвведите пароль\n\n1 попытка осталась: ▚[+]▞".ToUpper());
             if (this.Attempts < 1) Terminal.Print(0, 0, "robco industries (tm) termlink protocol\nвведите пароль\n\n0 попыток осталось:".ToUpper());
 
+            if (this.WordsTable[CursorWordIndex] == "]")
+            {
+                Terminal.Print(DumpWidth * 2 + 12 + 4, (TerminalHeight - 1), ">]]");
+            }
             if (OpenBrackets.Contains(this.WordsTable[this.CursorWordIndex]))
             {
-                string Combination = "";
+                Terminal.Print(DumpWidth * 2 + 12 + 4, (TerminalHeight - 1), ">");
                 for (int c = SearchSecretCombinations(this.CursorWordIndex).Key; c <= SearchSecretCombinations(this.CursorWordIndex).Value; c++)
                 {
-                    Combination += this.WordsTable[c];
+                    Terminal.Print(DumpWidth * 2 + 12 + 4 + 1 + c - SearchSecretCombinations(this.CursorWordIndex).Key, (TerminalHeight - 1), this.WordsTable[c][0].ToString() == "]" || this.WordsTable[c][0].ToString() == "[" ? this.WordsTable[c].ToString() + this.WordsTable[c].ToString() : this.WordsTable[c].ToString().ToUpper());//квадратные скобки выводить парами
                 }
-                Terminal.Print(DumpWidth * 2 + 12 + 4, (TerminalHeight - 1), ">" + Combination.ToUpper());
+
             }
             else
             {
@@ -513,7 +531,7 @@ namespace terminalhack
             }
 
 
-            for (int d = this.IOLog.Count() - DumpHeight / 2+2 < 0 ? 0 : this.IOLog.Count() - DumpHeight / 2+2; d < this.IOLog.Count(); d++)
+            for (int d = this.IOLog.Count() - DumpHeight / 2 + 2 < 0 ? 0 : this.IOLog.Count() - DumpHeight / 2 + 2; d < this.IOLog.Count(); d++)
             {
                 Terminal.Print(DumpWidth * 2 + 12 + 4, TerminalHeight - this.IOLog.Count() + d - 2, this.IOLog[d]);
             }
@@ -532,31 +550,31 @@ namespace terminalhack
             if (MoveVector.X > 0)
             {
                 //this.Cursor.X = this.WordsTableRanges[this.CursorWordIndex].Value % DumpWidth + 1;
-                if ((this.WordsTableRanges[this.CursorWordIndex].Value+1)/DumpWidth > this.CursorWordIndex/DumpWidth)
+                if ((this.WordsTableRanges[this.CursorWordIndex].Value + 1) / DumpWidth > this.CursorWordIndex / DumpWidth)
                 {
-                    this.Cursor.X = this.CursorWordIndex / DumpWidth+1;
+                    this.Cursor.X = this.CursorWordIndex / DumpWidth + 1;
                 }
                 else
                 {
                     this.Cursor.X = this.WordsTableRanges[this.CursorWordIndex].Value % DumpWidth + 1;
                 }
-                
+
                 //this.Cursor.Y = (this.WordsTableRanges[this.CursorWordIndex].Value+1) / DumpWidth;
             }
             if (MoveVector.X < 0)
             {
                 if ((this.WordsTableRanges[this.CursorWordIndex].Key - 1) / DumpWidth < this.CursorWordIndex / DumpWidth)
                 {
-                    this.Cursor.X = this.CursorWordIndex / DumpWidth-1;
+                    this.Cursor.X = this.CursorWordIndex / DumpWidth - 1;
                 }
                 else
                 {
-                    this.Cursor.X = this.WordsTableRanges[this.CursorWordIndex].Value % DumpWidth-1;
+                    this.Cursor.X = this.WordsTableRanges[this.CursorWordIndex].Value % DumpWidth - 1;
                 }
                 //this.Cursor.X = this.WordsTableRanges[this.CursorWordIndex].Key % 12 - 1;
                 //this.Cursor.Y = (this.WordsTableRanges[this.CursorWordIndex].Key - 1) / DumpWidth;
             }
-            
+
             this.Cursor.Y += MoveVector.Y;//ДОДЕЛАТЬ СИСТЕМУ КУРСОРА ГОВНА
 
             if (this.Cursor.X >= DumpWidth && this.Cursor.Y < DumpHeight / 2)
