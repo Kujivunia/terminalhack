@@ -308,7 +308,7 @@ namespace terminalhack
             }
             else
             {
-                if (WordsTable[CursorWordIndex]=="]")
+                if (WordsTable[CursorWordIndex] == "]")
                 {
                     this.IOLog.Add(">" + this.WordsTable[CursorWordIndex] + this.WordsTable[CursorWordIndex]);
                 }
@@ -623,6 +623,7 @@ namespace terminalhack
     {
         static void Main(string[] args)
         {
+            bool MouseClickAvailable = false;
             StreamReader sr = new StreamReader("common.json");
             string json = sr.ReadToEnd();
             List<string> WordsDictionary = JsonConvert.DeserializeObject<List<string>>(json).Where(item => item.Length >= 4 && item.Length <= 12).ToList();
@@ -658,14 +659,31 @@ namespace terminalhack
                     {
                         mx = Terminal.State(Terminal.TK_MOUSE_X);
                         my = Terminal.State(Terminal.TK_MOUSE_Y);
-
+                        MouseClickAvailable = false;
                         if (mx >= 0 && my >= 0) qwe.MoveToCursor(new System.Drawing.Point(mx, my));
+                        if (((mx >= 7 && mx < 19)|| ( mx > 26 && mx < 39)) && my >= (21 - 32 / 2))
+                        {
+                            MouseClickAvailable = true;
+                        }
                     }
                     if (TK == Terminal.TK_ENTER || TK == Terminal.TK_SPACE || TK == Terminal.TK_E || TK == Terminal.TK_MOUSE_LEFT)
                     {
-                        int Bulls = qwe.CheckWord();
+                        if (TK != Terminal.TK_MOUSE_LEFT)
+                        {
+                            int Bulls = qwe.CheckWord();
+                        }
+                        if (TK == Terminal.TK_MOUSE_LEFT && MouseClickAvailable)
+                        {
+                            int Bulls = qwe.CheckWord();
+                        }
+                        
+
                         //Terminal.Set("window: title=" + "'" + "Парола: " + ((Bulls == 8) ? "верная" : "неверная") + " " + Bulls + "'");
+
+
                     }
+
+
 
                 }
 
