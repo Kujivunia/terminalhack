@@ -233,10 +233,6 @@ namespace terminalhack
 
             WordsTableRangesFill();
         }
-        //! Проверки парола. Нужно прикрутить определение числа совпадающих букв, это просто. 
-        //! Удаление скобочных комбинаций. 
-        //! Активация скобочных комбинаций. Удаление заглушек
-        //! Вывода истории ввода -- пока не делал, но уже примерно знаю, как это сделать. 
         public int CheckWord()
         {
             KeyValuePair<int, int> CursorBlock = new KeyValuePair<int, int>(
@@ -546,6 +542,35 @@ namespace terminalhack
         }
         public void MoveCursor(System.Drawing.Point MoveVector)
         {
+            if (MoveVector.X < 0)
+            {
+                this.Cursor.X += -1 * MoveVector.X * ((this.WordsTableRanges[this.CursorWordIndex].Key - 1) - this.CursorFlat);
+            }
+            if (MoveVector.X > 0)
+            {
+                this.Cursor.X += MoveVector.X * ((this.WordsTableRanges[this.CursorWordIndex].Value + 1) - this.CursorFlat);
+            }
+
+            this.Cursor.Y += MoveVector.Y;
+
+            if (this.Cursor.X >= DumpWidth && this.Cursor.Y < DumpHeight / 2)
+            {
+                this.Cursor.Y = this.Cursor.Y + DumpHeight / 2;
+                this.Cursor.X = 0;
+            }
+            else
+            if (this.Cursor.X < 0 && this.Cursor.Y >= DumpHeight / 2)
+            {
+                this.Cursor.Y = this.Cursor.Y - DumpHeight / 2;
+                this.Cursor.X = DumpHeight;
+            }
+            //this.Cursor.X = Tor(0, DumpWidth - 1, this.Cursor.X);
+            this.Cursor.Y = this.Cursor.Y < 0 ? 0 : this.Cursor.Y;
+            this.Cursor.Y = this.Cursor.Y >= DumpHeight ? DumpHeight - 1 : this.Cursor.Y;
+
+            this.Cursor.X = this.Cursor.X < 0 ? 0 : this.Cursor.X;
+            this.Cursor.X = this.Cursor.X >= DumpWidth ? DumpWidth - 1 : this.Cursor.X;
+            /*
             //this.Cursor.X += MoveVector.X * this.WordsTable[this.CursorWordIndex].Length;
             if (MoveVector.X > 0)
             {
@@ -594,6 +619,7 @@ namespace terminalhack
 
             this.Cursor.X = this.Cursor.X < 0 ? 0 : this.Cursor.X;
             this.Cursor.X = this.Cursor.X >= DumpWidth ? DumpWidth - 1 : this.Cursor.X;
+            */
             this.CursorFlat = FlatteringCursor(this.Cursor);
             CursorWordIndexMath();
         }
@@ -611,7 +637,6 @@ namespace terminalhack
                 this.Cursor.Y = MovePoint.Y - (TerminalHeight - DumpHeight / 2) + DumpHeight / 2;
             }
 
-            //! Перевод координат окна в координаты Dump
             this.CursorFlat = FlatteringCursor(Cursor);
             CursorWordIndexMath();
         }
@@ -641,7 +666,7 @@ namespace terminalhack
                 //if (Terminal.HasInput())
                 //! (бонусная задача) Добавить звуки. 
                 {//! Сделать нормальное приложение вокруг механики игры. А именно, починить управление (сейчас работает лишь частично). 
-                    int TK = Terminal.Read(); //! Управление мышкой.  
+                    int TK = Terminal.Read();
                     //Terminal.Set("window: title=" + "'" + Terminal.Peek().ToString() + "'");
                     dx = TK == Terminal.TK_LEFT ? -1 : TK == Terminal.TK_RIGHT ? 1 : 0;
                     dy = TK == Terminal.TK_UP ? -1 : TK == Terminal.TK_DOWN ? 1 : 0;
@@ -661,7 +686,7 @@ namespace terminalhack
                         my = Terminal.State(Terminal.TK_MOUSE_Y);
                         MouseClickAvailable = false;
                         if (mx >= 0 && my >= 0) qwe.MoveToCursor(new System.Drawing.Point(mx, my));
-                        if (((mx >= 7 && mx < 19)|| ( mx > 26 && mx < 39)) && my >= (21 - 32 / 2))
+                        if (((mx >= 7 && mx < 19) || (mx > 26 && mx < 39)) && my >= (21 - 32 / 2))
                         {
                             MouseClickAvailable = true;
                         }
@@ -676,7 +701,7 @@ namespace terminalhack
                         {
                             int Bulls = qwe.CheckWord();
                         }
-                        
+
 
                         //Terminal.Set("window: title=" + "'" + "Парола: " + ((Bulls == 8) ? "верная" : "неверная") + " " + Bulls + "'");
 
