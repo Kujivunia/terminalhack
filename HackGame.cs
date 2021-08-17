@@ -69,13 +69,13 @@ namespace terminalhack
                 case "f4":
                     {
                         this.BkColor = System.Drawing.Color.Black;
-                        this.Color = System.Drawing.Color.FromArgb(51,255,51);//Apple ][
+                        this.Color = System.Drawing.Color.FromArgb(51, 255, 51);//Apple ][
                         break;
                     }
                 case "amber":
                     {
                         this.BkColor = System.Drawing.Color.FromArgb(40, 40, 40);//bg
-                        this.Color = System.Drawing.Color.FromArgb(255,176,0);//Amber
+                        this.Color = System.Drawing.Color.FromArgb(255, 176, 0);//Amber
                         break;
                     }
                 default:
@@ -84,13 +84,13 @@ namespace terminalhack
                         this.Color = System.Drawing.Color.LightGreen;
                         break;
                     }
-                    
+
             }
 
         }
         private int DudsAndPasswordCount(int ScienceLvl, int TerminalLvl)
         {
-            if (TerminalLvl == 100 && ScienceLvl == 100) 
+            if (TerminalLvl == 100 && ScienceLvl == 100)
                 return 13;
             else
                 return (int)System.Math.Round(15d / (100 - TerminalLvl) * (100 - ScienceLvl)) + 5;
@@ -162,7 +162,7 @@ namespace terminalhack
         public HackGame(List<string> WordsList, int TerminalLevel = 50, int ScienceLevel = 50)
         {
             this.OffsetStart = rnd.Next(OffsetMin, OffsetMax);
-            this.PasswordLength = 4 + 2 * (TerminalLevel/25);
+            this.PasswordLength = 4 + 2 * (TerminalLevel / 25);
             this.WordCount = this.DudsAndPasswordCount(ScienceLevel, TerminalLevel);
             //this.BracketCount = 50 + LuckyLevel * 10;
 
@@ -607,7 +607,18 @@ namespace terminalhack
                 this.Cursor.X += MoveVector.X * ((this.WordsTableRanges[this.CursorWordIndex].Value + 1) - this.CursorFlat);
             }
 
-            this.Cursor.Y += MoveVector.Y;
+            if (MoveVector.Y > 0 && this.Cursor.Y == DumpHeight / 2-1)//down
+            {
+
+            }
+            else if (MoveVector.Y < 0 && this.Cursor.Y == DumpHeight / 2)//up
+            {
+
+            }
+            else
+            {
+                this.Cursor.Y += MoveVector.Y;
+            }
 
             if (this.Cursor.X >= DumpWidth && this.Cursor.Y < DumpHeight / 2)
             {

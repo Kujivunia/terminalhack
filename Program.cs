@@ -15,10 +15,18 @@ namespace terminalhack
         {
             
             bool MouseClickAvailable = false;
+
             StreamReader sr = new StreamReader("common.json");
             string json = sr.ReadToEnd();
+
+            StreamReader SettingsSr = new StreamReader("Settings.json");
+            string SettingsJson = SettingsSr.ReadToEnd();
+
             List<string> WordsDictionary = JsonConvert.DeserializeObject<List<string>>(json).Where(item => item.Length >= 4 && item.Length <= 12).ToList();
+
+
             HackGame GameSession = new HackGame(WordsDictionary);
+
             Terminal.Set("input.filter = [keyboard, mouse]; window: title='RobCo Industries™ Termlink',icon='icon.ico'");
             GameSession.SwitchColor("f3");//amber
             GameSession.GenerateWordsTable();
@@ -34,20 +42,16 @@ namespace terminalhack
                 //! (бонусная задача) Добавить звуки. 
                 {//! Сделать нормальное приложение вокруг механики игры. А именно, починить управление (сейчас работает лишь частично). 
                     int TK = Terminal.Read();
-                    //Terminal.Set("window: title=" + "'" + Terminal.Peek().ToString() + "'");
                     if (TK == Terminal.TK_LEFT || TK == Terminal.TK_RIGHT || TK == Terminal.TK_DOWN || TK == Terminal.TK_UP)
                     {
                         dx = TK == Terminal.TK_LEFT ? -1 : TK == Terminal.TK_RIGHT ? 1 : 0;
                         dy = TK == Terminal.TK_UP ? -1 : TK == Terminal.TK_DOWN ? 1 : 0;
                     }
-
                     if (TK == Terminal.TK_A || TK == Terminal.TK_W || TK == Terminal.TK_D || TK == Terminal.TK_S)
                     {
                         dx = TK == Terminal.TK_A ? -1 : TK == Terminal.TK_D ? 1 : 0;
                         dy = TK == Terminal.TK_W ? -1 : TK == Terminal.TK_S ? 1 : 0;
                     }
-
-
                     GameSession.MoveCursor(new System.Drawing.Point(dx, dy));
                     if (TK == Terminal.TK_BACKSPACE)
                     {
@@ -80,12 +84,7 @@ namespace terminalhack
                         {
                             int Bulls = GameSession.CheckWord();
                         }
-
-
                     }
-
-
-
                 }
                 GameSession.ShowFrame();
             }
