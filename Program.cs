@@ -9,11 +9,16 @@ using Newtonsoft.Json;
 namespace terminalhack
 {
     //^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
     class Programm
     {
         static void Main(string[] args)
         {
-            
+            System.Collections.Generic.Dictionary<string, string> Settings = new Dictionary<string, string>();
+            Settings.Add("TerminalLevel", "50");
+            Settings.Add("ScienceLevel", "50");
+            Settings.Add("ColorTheme", "f3");
+
             bool MouseClickAvailable = false;
 
             StreamReader sr = new StreamReader("common.json");
@@ -23,12 +28,12 @@ namespace terminalhack
             string SettingsJson = SettingsSr.ReadToEnd();
 
             List<string> WordsDictionary = JsonConvert.DeserializeObject<List<string>>(json).Where(item => item.Length >= 4 && item.Length <= 12).ToList();
+            Settings = JsonConvert.DeserializeObject<System.Collections.Generic.Dictionary<string, string>>(SettingsJson);
 
-
-            HackGame GameSession = new HackGame(WordsDictionary);
+            HackGame GameSession = new HackGame(WordsDictionary,int.Parse(Settings["TerminalLevel"]), int.Parse(Settings["ScienceLevel"]));
 
             Terminal.Set("input.filter = [keyboard, mouse]; window: title='RobCo Industries™ Termlink',icon='icon.ico'");
-            GameSession.SwitchColor("f3");//amber
+            GameSession.SwitchColor(Settings["ColorTheme"]);//amber
             GameSession.GenerateWordsTable();
             GameSession.ShowFrame();
             
@@ -57,7 +62,7 @@ namespace terminalhack
                     {
                         GameSession = new HackGame(WordsDictionary);
                         GameSession.GenerateWordsTable();
-                        GameSession.SwitchColor("f3");//amber
+                        GameSession.SwitchColor(Settings["ColorTheme"]);//amber
                     }
                     if (TK == Terminal.TK_ESCAPE || TK == Terminal.TK_CLOSE)
                     {
