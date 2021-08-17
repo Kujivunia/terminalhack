@@ -10,7 +10,7 @@ namespace terminalhack
     {
         private Random rnd = new Random();
 
-        private static readonly int DumpHeight = 32;
+        private static readonly int DumpHeight = 34;//32-34
         private static readonly int DumpWidth = 12;
 
         private static readonly int OffsetInc = DumpWidth;
@@ -18,7 +18,7 @@ namespace terminalhack
         private static readonly int OffsetMax = 65150;
         private int OffsetStart = 0;
 
-        private static readonly int TerminalHeight = 21;//25-21
+        private static readonly int TerminalHeight = 22;//25-21
         private int TerminalWidth = 58;//80-64-56
 
         private int Attempts = 4;
@@ -94,7 +94,7 @@ namespace terminalhack
             if (TerminalLvl == 100 && ScienceLvl == 100)
                 return 13;
             else
-                return (int)System.Math.Round(15d / (100 - TerminalLvl) * (100 - ScienceLvl)) + 5;
+                return ((int)System.Math.Round(15d / (100 - TerminalLvl) * (100 - ScienceLvl)) + 5) < 5 ? 5 : ((int)System.Math.Round(15d / (100 - TerminalLvl) * (100 - ScienceLvl)) + 5);
         }
 
         public void SetUserColor(System.Drawing.Color Color, System.Drawing.Color BkColor)
@@ -160,7 +160,7 @@ namespace terminalhack
 
             return result;
         }
-        public HackGame(List<string> WordsList, int TerminalLevel = 50, int ScienceLevel = 50,string Language = "ru")
+        public HackGame(List<string> WordsList, int TerminalLevel = 50, int ScienceLevel = 50, string Language = "ru")
         {
             this.OffsetStart = rnd.Next(OffsetMin, OffsetMax);
             this.PasswordLength = 4 + 2 * (TerminalLevel / 25);
@@ -169,12 +169,14 @@ namespace terminalhack
             //this.BracketCount = 50 + LuckyLevel * 10;
             switch (this.Language)
             {
-                case "ru": this.TerminalWidth = 58;
+                case "ru":
+                    this.TerminalWidth = 58;
                     break;
                 case "en":
                     this.TerminalWidth = 54;
                     break;
-                default: this.TerminalWidth = 54;
+                default:
+                    this.TerminalWidth = 54;
                     break;
             }
             foreach (var item in WordsList.Where(item => item.Length == this.PasswordLength).ToList())
@@ -630,7 +632,7 @@ namespace terminalhack
                 AttemptsCountSquares += " ▚[+]▞";
             }
 
-            if (this.Attempts == 1) 
+            if (this.Attempts == 1)
                 Terminal.Print(0, 0, this.Strings[this.Language]["LockoutImminent"].ToUpper() + AttemptsCountSquares, Attempts);
             else
                 Terminal.Print(0, 0, this.Strings[this.Language]["AttemptsLeft"].ToUpper() + AttemptsCountSquares, Attempts);
@@ -681,7 +683,7 @@ namespace terminalhack
                 this.Cursor.X += MoveVector.X * ((this.WordsTableRanges[this.CursorWordIndex].Value + 1) - this.CursorFlat);
             }
 
-            if (MoveVector.Y > 0 && this.Cursor.Y == DumpHeight / 2-1)//down
+            if (MoveVector.Y > 0 && this.Cursor.Y == DumpHeight / 2 - 1)//down
             {
 
             }

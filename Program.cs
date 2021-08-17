@@ -31,10 +31,32 @@ namespace terminalhack
             List<string> WordsDictionary = JsonConvert.DeserializeObject<List<string>>(json).Where(item => item.Length >= 4 && item.Length <= 12).ToList();
             Settings = JsonConvert.DeserializeObject<System.Collections.Generic.Dictionary<string, string>>(SettingsJson);
 
-            HackGame GameSession = new HackGame(WordsDictionary,int.Parse(Settings["TerminalLevel"]), int.Parse(Settings["ScienceLevel"]),Settings["Language"]);
+            HackGame GameSession = new HackGame(WordsDictionary,int.Parse(Settings["TerminalLevel"]), int.Parse(Settings["ScienceLevel"]),Settings["Language"].ToLower());
+
+            
+            GameSession.SwitchColor(Settings["ColorTheme"].ToLower());//amber
+            
+
+            if (int.Parse(Settings["ScienceLevel"]) < int.Parse(Settings["TerminalLevel"]))
+            {
+                Terminal.Clear();
+                string temprus = "Вы не можете взломать терминал уровня {0} с наукой {1}".ToUpper();
+                string tempen = "You can't hack lvl {0} terminal with science lvl {1}".ToUpper();
+                if (Settings["Language"].ToLower().Equals("ru"))
+                {
+                    Terminal.Print(Terminal.State(Terminal.TK_WIDTH) / 2 - temprus.Length/2, Terminal.State(Terminal.TK_HEIGHT) / 2, temprus, int.Parse(Settings["TerminalLevel"]), int.Parse(Settings["ScienceLevel"]));
+                }
+                if (Settings["Language"].ToLower().Equals("en"))
+                {
+                    Terminal.Print(Terminal.State(Terminal.TK_WIDTH) / 2 - tempen.Length / 2, Terminal.State(Terminal.TK_HEIGHT) / 2, tempen, int.Parse(Settings["TerminalLevel"]), int.Parse(Settings["ScienceLevel"]));
+                }
+                Terminal.Refresh();
+                Terminal.Read();
+                
+                return;
+            }
 
             Terminal.Set("input.filter = [keyboard, mouse]; window: title='RobCo Industries™ Termlink',icon='icon.ico'");
-            GameSession.SwitchColor(Settings["ColorTheme"]);//amber
             GameSession.GenerateWordsTable();
             GameSession.ShowFrame();
             
@@ -61,9 +83,9 @@ namespace terminalhack
                     GameSession.MoveCursor(new System.Drawing.Point(dx, dy));
                     if (TK == Terminal.TK_BACKSPACE)
                     {
-                        GameSession = new HackGame(WordsDictionary, int.Parse(Settings["TerminalLevel"]), int.Parse(Settings["ScienceLevel"]),Settings["Language"]);
+                        GameSession = new HackGame(WordsDictionary, int.Parse(Settings["TerminalLevel"]), int.Parse(Settings["ScienceLevel"]),Settings["Language"].ToLower());
                         GameSession.GenerateWordsTable();
-                        GameSession.SwitchColor(Settings["ColorTheme"]);//amber
+                        GameSession.SwitchColor(Settings["ColorTheme"].ToLower());//amber
                     }
                     if (TK == Terminal.TK_ESCAPE || TK == Terminal.TK_CLOSE)
                     {
