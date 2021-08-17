@@ -18,8 +18,8 @@ namespace terminalhack
         private static readonly int OffsetMax = 65150;
         private int OffsetStart = 0;
 
-        private static readonly int TerminalHeight = 21;//25
-        private static readonly int TerminalWidth = 64;//80
+        private static readonly int TerminalHeight = 21;//25-21
+        private int TerminalWidth = 58;//80-64-56
 
         private int Attempts = 4;
 
@@ -47,7 +47,8 @@ namespace terminalhack
         private bool Unlock = false;
         private System.Drawing.Color Color = System.Drawing.Color.LightGreen;
         private System.Drawing.Color BkColor = System.Drawing.Color.DarkGreen;
-
+        private Dictionary<string, Dictionary<string, string>> Strings = new Dictionary<string, Dictionary<string, string>>();
+        private string Language = "ru";
         public void SwitchColor(string ColorTheme)
         {
             ColorTheme = ColorTheme.ToLower();
@@ -159,19 +160,87 @@ namespace terminalhack
 
             return result;
         }
-        public HackGame(List<string> WordsList, int TerminalLevel = 50, int ScienceLevel = 50)
+        public HackGame(List<string> WordsList, int TerminalLevel = 50, int ScienceLevel = 50,string Language = "ru")
         {
             this.OffsetStart = rnd.Next(OffsetMin, OffsetMax);
             this.PasswordLength = 4 + 2 * (TerminalLevel / 25);
             this.WordCount = this.DudsAndPasswordCount(ScienceLevel, TerminalLevel);
+            this.Language = Language;
             //this.BracketCount = 50 + LuckyLevel * 10;
-
+            switch (this.Language)
+            {
+                case "ru": this.TerminalWidth = 58;
+                    break;
+                case "en":
+                    this.TerminalWidth = 54;
+                    break;
+                default: this.TerminalWidth = 54;
+                    break;
+            }
             foreach (var item in WordsList.Where(item => item.Length == this.PasswordLength).ToList())
             {
                 this.WordsDict.Add(item);
             }
 
             string options = "window: size =" + TerminalWidth.ToString() + "x" + TerminalHeight.ToString();
+
+            Strings.Add("ru", new Dictionary<string, string>());
+            Strings.Add("en", new Dictionary<string, string>());
+
+            Strings["ru"].Add("EnterPassword", "введите пароль");
+            Strings["en"].Add("EnterPassword", "enter password now");
+
+            Strings["ru"].Add("WelcomeToRobco", "welcome to robco industries (tm) termlink");
+            Strings["en"].Add("WelcomeToRobco", "welcome to robco industries (tm) termlink");
+
+            Strings["ru"].Add("LogonAdmin", "> logon admin");
+            Strings["en"].Add("LogonAdmin", "> logon admin");
+
+            Strings["ru"].Add("EntryDenied", "Отказ в доступе.");
+            Strings["en"].Add("EntryDenied", "Entry denied.");
+
+            Strings["ru"].Add("Correct", "правильно.");
+            Strings["en"].Add("Correct", "correct.");
+
+            Strings["ru"].Add("Allowance", "Пользование");
+            Strings["en"].Add("Allowance", "Allowance");
+
+            Strings["ru"].Add("Replenished", "вновь разрешено.");
+            Strings["en"].Add("Replenished", "replenished.");
+
+            Strings["ru"].Add("DudRemoved", "Заглушка удалена.");
+            Strings["en"].Add("DudRemoved", "Dud removed.");
+
+            Strings["ru"].Add("PleaseWait", "Пожалуйста,");
+            Strings["en"].Add("PleaseWait", "Please wait");
+
+            Strings["ru"].Add("ExactMatch", "Точно!");
+            Strings["en"].Add("ExactMatch", "Exact match!");
+
+            Strings["ru"].Add("WhileSystem", "подождите");
+            Strings["en"].Add("WhileSystem", "while system");
+
+            Strings["ru"].Add("IsAccessed", "входа в систему.");
+            Strings["en"].Add("IsAccessed", "is accessed.");
+
+            Strings["ru"].Add("InitLockout", "Блокировка начата.");
+            Strings["en"].Add("InitLockout", "Init lockout.");
+
+            Strings["ru"].Add("TerminalLocked", "терминал заблокирован");
+            Strings["en"].Add("TerminalLocked", "terminal locked");
+
+            Strings["ru"].Add("PleaseContactAnAdministrator", "пожалуйста, свяжитесь с администратором");
+            Strings["en"].Add("PleaseContactAnAdministrator", "please, contact an administrator");
+
+
+            Strings["ru"].Add("AttemptsLeft", "robco industries (tm) termlink protocol\nвведите пароль\n\n{0} попытки осталось:");
+            Strings["en"].Add("AttemptsLeft", "robco industries (tm) termlink protocol\nenter password now\n\n{0} attempt(s) left:");
+
+            Strings["ru"].Add("LockoutImminent", "robco industries (tm) termlink protocol\n!!! предупреждение: терминал может быть заблокирован !!!\n\n{0} попытки осталось:");
+            Strings["en"].Add("LockoutImminent", "robco industries (tm) termlink protocol\n!!! warning: lockout imminent !!!\n\n{0} attempt(s) left:");
+
+
+
             Terminal.Open();
             Terminal.Set(options);
             Terminal.Color(this.BkColor);
@@ -308,8 +377,8 @@ namespace terminalhack
                 {
                     this.Attempts = 4;
 
-                    this.IOLog.Add(">" + "Пользование");
-                    this.IOLog.Add(">" + "вновь разрешено.");
+                    this.IOLog.Add(">" + this.Strings[this.Language]["Allowance"]);
+                    this.IOLog.Add(">" + this.Strings[this.Language]["Replenished"]);
                     return -1;
                 }
                 else
@@ -325,7 +394,7 @@ namespace terminalhack
                     this.WordsTableRangesFill();
                     this.CursorWordIndexMath();
                     this.Attempts++;
-                    this.IOLog.Add(">" + "Заглушка убрана.");
+                    this.IOLog.Add(">" + this.Strings[this.Language]["DudRemoved"]);
                     return -2;
                 }
 
@@ -333,10 +402,10 @@ namespace terminalhack
             else if (this.WordsTable[CursorWordIndex].Equals(this.Password))
             {
                 this.IOLog.Add(">" + this.WordsTable[CursorWordIndex].ToUpper());
-                this.IOLog.Add(">" + "Точно!");
-                this.IOLog.Add(">" + "Пожалуйста,");
-                this.IOLog.Add(">" + "подождите");
-                this.IOLog.Add(">" + "входа в систему.");
+                this.IOLog.Add(">" + this.Strings[this.Language]["ExactMatch"]);
+                this.IOLog.Add(">" + this.Strings[this.Language]["PleaseWait"]);
+                this.IOLog.Add(">" + this.Strings[this.Language]["WhileSystem"]);
+                this.IOLog.Add(">" + this.Strings[this.Language]["IsAccessed"]);
                 this.Unlock = true;
                 return this.PasswordLength;
             }
@@ -349,8 +418,8 @@ namespace terminalhack
                     Bulls += this.Password[i] == this.WordsTable[CursorWordIndex][i] ? 1 : 0;//готово
                 }
                 this.IOLog.Add(">" + this.WordsTable[CursorWordIndex].ToUpper());
-                this.IOLog.Add(">" + "Отказ в доступе.");
-                this.IOLog.Add(">" + Bulls + "/" + this.PasswordLength + " правильно.");
+                this.IOLog.Add(">" + this.Strings[this.Language]["EntryDenied"]);
+                this.IOLog.Add(">" + Bulls + "/" + this.PasswordLength + " " + this.Strings[this.Language]["Correct"]);
                 return Bulls;
             }
             else
@@ -364,13 +433,13 @@ namespace terminalhack
                     this.IOLog.Add(">" + this.WordsTable[CursorWordIndex]);
                 }
 
-                this.IOLog.Add(">" + "Отказ в доступе.");
-                this.IOLog.Add(">" + this.WordBulls(this.Password, this.WordsTable[CursorWordIndex]) + "/" + this.PasswordLength + " правильно.");
+                this.IOLog.Add(">" + this.Strings[this.Language]["EntryDenied"]);
+                this.IOLog.Add(">" + this.WordBulls(this.Password, this.WordsTable[CursorWordIndex]) + "/" + this.PasswordLength + " " + this.Strings[this.Language]["Correct"]);
             }
 
             if (this.Attempts < 1)
             {
-                this.IOLog.Add(">" + "Блокировка начата.");
+                this.IOLog.Add(">" + this.Strings[this.Language]["InitLockout"]);
             }
 
             return 0;
@@ -418,15 +487,15 @@ namespace terminalhack
                 Terminal.Color(this.Color);
                 Terminal.Clear();
 
-                Terminal.Print(0, 0, "welcome to robco industries (tm) termlink".ToUpper());
+                Terminal.Print(0, 0, this.Strings[this.Language]["WelcomeToRobco"].ToUpper());
                 Terminal.Refresh();
-                for (int x = 0; x < "> logon admin".Length; x++)
+                for (int x = 0; x < this.Strings[this.Language]["LogonAdmin"].Length; x++)
                 {
-                    Terminal.Put(x, 2, "> logon admin".ToUpper()[x]);
+                    Terminal.Put(x, 2, this.Strings[this.Language]["LogonAdmin"].ToUpper()[x]);
                     Terminal.Refresh();
                     Terminal.Delay(rnd.Next(35, 88));
                 }
-                Terminal.Print(0, 4, "введите пароль".ToUpper());
+                Terminal.Print(0, 4, this.Strings[this.Language]["EnterPassword"].ToUpper());
                 Terminal.Refresh();
                 string pass = "> "; for (int x = 0; x < this.PasswordLength; x++) pass += "*";
                 for (int x = 0; x < pass.Length; x++)
@@ -444,9 +513,9 @@ namespace terminalhack
                 Terminal.Color(this.BkColor);
                 Terminal.Color(this.Color);
                 Terminal.Clear();
-                Terminal.Print(0, 0, "welcome to robco industries (tm) termlink".ToUpper());
-                Terminal.Print(0, 2, "> logon admin".ToUpper());
-                Terminal.Print(0, 4, "введите пароль".ToUpper());
+                Terminal.Print(0, 0, this.Strings[this.Language]["WelcomeToRobco"].ToUpper());
+                Terminal.Print(0, 2, this.Strings[this.Language]["LogonAdmin"].ToUpper());
+                Terminal.Print(0, 4, this.Strings[this.Language]["EnterPassword"].ToUpper());
                 string pass = "> "; for (int x = 0; x < this.PasswordLength; x++) pass += "*";
                 Terminal.Print(0, 6, pass.ToUpper());
                 Terminal.Refresh();
@@ -490,8 +559,8 @@ namespace terminalhack
                 Terminal.BkColor(this.BkColor);
                 Terminal.Color(this.Color);
                 Terminal.Clear();
-                Terminal.Print(TerminalWidth / 2 - "терминал заблокирован".Length / 2, TerminalHeight / 2 - 1, "терминал заблокирован".ToUpper());
-                Terminal.Print(TerminalWidth / 2 - "пожалуйста, свяжитесь с администратором".Length / 2, TerminalHeight / 2 + 1, "пожалуйста, свяжитесь с администратором".ToUpper());
+                Terminal.Print(TerminalWidth / 2 - this.Strings[this.Language]["TerminalLocked"].Length / 2, TerminalHeight / 2 - 1, this.Strings[this.Language]["TerminalLocked"].ToUpper());
+                Terminal.Print(TerminalWidth / 2 - this.Strings[this.Language]["PleaseContactAnAdministrator"].Length / 2, TerminalHeight / 2 + 1, this.Strings[this.Language]["PleaseContactAnAdministrator"].ToUpper());
                 Terminal.Refresh();
                 this.BlockScreen = true;
                 return;
@@ -501,8 +570,8 @@ namespace terminalhack
                 Terminal.BkColor(this.BkColor);
                 Terminal.Color(this.Color);
                 Terminal.Clear();
-                Terminal.Print(TerminalWidth / 2 - "терминал заблокирован".Length / 2, TerminalHeight / 2 - 1, "терминал заблокирован".ToUpper());
-                Terminal.Print(TerminalWidth / 2 - "пожалуйста, свяжитесь с администратором".Length / 2, TerminalHeight / 2 + 1, "пожалуйста, свяжитесь с администратором".ToUpper());
+                Terminal.Print(TerminalWidth / 2 - this.Strings[this.Language]["TerminalLocked"].Length / 2, TerminalHeight / 2 - 1, this.Strings[this.Language]["TerminalLocked"].ToUpper());
+                Terminal.Print(TerminalWidth / 2 - this.Strings[this.Language]["PleaseContactAnAdministrator"].Length / 2, TerminalHeight / 2 + 1, this.Strings[this.Language]["PleaseContactAnAdministrator"].ToUpper());
                 Terminal.Refresh();
                 return;
             }
@@ -555,11 +624,16 @@ namespace terminalhack
                 i++;
             }
 
-            if (this.Attempts == 4) Terminal.Print(0, 0, "robco industries (tm) termlink protocol\nвведите пароль\n\n4 попытки осталось: ▚[+]▞ ▚[+]▞ ▚[+]▞ ▚[+]▞".ToUpper());//\u25FC
-            if (this.Attempts == 3) Terminal.Print(0, 0, "robco industries (tm) termlink protocol\nвведите пароль\n\n3 попытки осталось: ▚[+]▞ ▚[+]▞ ▚[+]▞".ToUpper());
-            if (this.Attempts == 2) Terminal.Print(0, 0, "robco industries (tm) termlink protocol\nвведите пароль\n\n2 попытки осталось: ▚[+]▞ ▚[+]▞".ToUpper());
-            if (this.Attempts == 1) Terminal.Print(0, 0, "robco industries (tm) termlink protocol\nвведите пароль\n\n1 попытка осталась: ▚[+]▞".ToUpper());
-            if (this.Attempts < 1) Terminal.Print(0, 0, "robco industries (tm) termlink protocol\nвведите пароль\n\n0 попыток осталось:".ToUpper());
+            string AttemptsCountSquares = "";
+            for (int sq = 0; sq < this.Attempts; sq++)
+            {
+                AttemptsCountSquares += " ▚[+]▞";
+            }
+
+            if (this.Attempts == 1) 
+                Terminal.Print(0, 0, this.Strings[this.Language]["LockoutImminent"].ToUpper() + AttemptsCountSquares, Attempts);
+            else
+                Terminal.Print(0, 0, this.Strings[this.Language]["AttemptsLeft"].ToUpper() + AttemptsCountSquares, Attempts);
 
             if (this.WordsTable[CursorWordIndex] == "]")
             {

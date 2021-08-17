@@ -22,5 +22,23 @@ namespace terminalhack.Properties {
                 return defaultInstance;
             }
         }
+        
+        [global::System.Configuration.ApplicationScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("correct")]
+        public string Correct {
+            get {
+                return ((string)(this["Correct"]));
+            }
+        }
+        
+        [global::System.Configuration.ApplicationScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("")]
+        public string Параметр1 {
+            get {
+                return ((string)(this["Параметр1"]));
+            }
+        }
     }
 }

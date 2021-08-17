@@ -18,19 +18,20 @@ namespace terminalhack
             Settings.Add("TerminalLevel", "50");
             Settings.Add("ScienceLevel", "50");
             Settings.Add("ColorTheme", "f3");
+            Settings.Add("Language", "ru");
 
             bool MouseClickAvailable = false;
 
             StreamReader sr = new StreamReader("common.json");
             string json = sr.ReadToEnd();
-
+            sr.Close();
             StreamReader SettingsSr = new StreamReader("Settings.json");
             string SettingsJson = SettingsSr.ReadToEnd();
-
+            SettingsSr.Close();
             List<string> WordsDictionary = JsonConvert.DeserializeObject<List<string>>(json).Where(item => item.Length >= 4 && item.Length <= 12).ToList();
             Settings = JsonConvert.DeserializeObject<System.Collections.Generic.Dictionary<string, string>>(SettingsJson);
 
-            HackGame GameSession = new HackGame(WordsDictionary,int.Parse(Settings["TerminalLevel"]), int.Parse(Settings["ScienceLevel"]));
+            HackGame GameSession = new HackGame(WordsDictionary,int.Parse(Settings["TerminalLevel"]), int.Parse(Settings["ScienceLevel"]),Settings["Language"]);
 
             Terminal.Set("input.filter = [keyboard, mouse]; window: title='RobCo Industries™ Termlink',icon='icon.ico'");
             GameSession.SwitchColor(Settings["ColorTheme"]);//amber
@@ -60,7 +61,7 @@ namespace terminalhack
                     GameSession.MoveCursor(new System.Drawing.Point(dx, dy));
                     if (TK == Terminal.TK_BACKSPACE)
                     {
-                        GameSession = new HackGame(WordsDictionary);
+                        GameSession = new HackGame(WordsDictionary, int.Parse(Settings["TerminalLevel"]), int.Parse(Settings["ScienceLevel"]),Settings["Language"]);
                         GameSession.GenerateWordsTable();
                         GameSession.SwitchColor(Settings["ColorTheme"]);//amber
                     }
