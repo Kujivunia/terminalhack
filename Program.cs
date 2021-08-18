@@ -19,6 +19,8 @@ namespace terminalhack
             Settings.Add("ScienceLevel", "50");
             Settings.Add("ColorTheme", "f3");
             Settings.Add("Language", "ru");
+            Settings.Add("FontSize", "18");
+            Settings.Add("Font", "FixedsysRus.ttf");
 
             bool MouseClickAvailable = false;
 
@@ -56,7 +58,16 @@ namespace terminalhack
                 return;
             }
 
-            Terminal.Set("input.filter = [keyboard, mouse]; window: title='RobCo Industries™ Termlink',icon='icon.ico'");
+            Terminal.Set("input.filter = [keyboard, mouse]; window: title='RobCo Industries™ Termlink',icon='icon.ico';");
+            try
+            {
+                Terminal.Set("font: {0}, size={1}", Settings["Font"], Settings["FontSize"]);
+            }
+            catch (System.Exception)
+            {
+                Terminal.Set("font:");
+            }
+            //Terminal.Set("font: {0}, size={1}", Settings["Font"], Settings["FontSize"]);
             GameSession.GenerateWordsTable();
             GameSession.ShowFrame();
             
