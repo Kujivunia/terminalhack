@@ -42,13 +42,15 @@ namespace terminalhack
         private List<int> UsedBracketsIndex = new List<int>();
         private string Password;
         private List<string> Duds = new List<string>();
-        private bool BlockScreen = false;
-        private bool UnlockScreen = false;
-        private bool Unlock = false;
+        private bool bBlockScreen = false;
+        private bool bUnlockScreen = false;
+        private bool bUnlocked = false;
+        private bool bLocked = false;
         private System.Drawing.Color Color = System.Drawing.Color.LightGreen;
         private System.Drawing.Color BkColor = System.Drawing.Color.DarkGreen;
         private Dictionary<string, Dictionary<string, string>> Strings = new Dictionary<string, Dictionary<string, string>>();
         private string Language = "ru";
+        private bool bLaunching = true;
         public void SwitchColor(string ColorTheme)
         {
             ColorTheme = ColorTheme.ToLower();
@@ -184,8 +186,7 @@ namespace terminalhack
                 this.WordsDict.Add(item);
             }
 
-            string options = "window: size =" + TerminalWidth.ToString() + "x" + TerminalHeight.ToString();
-
+            /*
             Strings.Add("ru", new Dictionary<string, string>());
             Strings.Add("en", new Dictionary<string, string>());
 
@@ -240,9 +241,38 @@ namespace terminalhack
 
             Strings["ru"].Add("LockoutImminent", "robco industries (tm) termlink protocol\n!!! предупреждение: терминал может быть заблокирован !!!\n\n{0} попытки осталось:");
             Strings["en"].Add("LockoutImminent", "robco industries (tm) termlink protocol\n!!! warning: lockout imminent !!!\n\n{0} attempt(s) left:");
+            */
+            /* 
+            string Stringsqwe = Newtonsoft.Json.JsonConvert.SerializeObject(Strings);
+            System.IO.StreamWriter StringsSr = new System.IO.StreamWriter("Strings.json");
+            StringsSr.Write(Stringsqwe);
+            StringsSr.Close();
+            */
 
+            System.IO.StreamReader StringsSr = new System.IO.StreamReader("Strings.json");
+            string StringsJson = StringsSr.ReadToEnd();
+            StringsSr.Close();
+            Strings = Newtonsoft.Json.JsonConvert.DeserializeObject<Dictionary<string, Dictionary<string, string>>>(StringsJson);
 
+            int MaxLogWidth = 0;
+            List<string> TempList = new List<string>();
+            TempList.Add("EntryDenied");
+            TempList.Add("Correct");
+            TempList.Add("Allowance");
+            TempList.Add("Replenished");
+            TempList.Add("DudRemoved");
+            TempList.Add("PleaseWait");
+            TempList.Add("ExactMatch");
+            TempList.Add("WhileSystem");
+            TempList.Add("IsAccessed");
+            TempList.Add("InitLockout");
+            foreach (var item in TempList)
+            {
+                MaxLogWidth = Strings[Language][item].Length > MaxLogWidth ? Strings[Language][item].Length : MaxLogWidth;
+            }
+            this.TerminalWidth = 40 + MaxLogWidth;
 
+            string options = "window: size =" + TerminalWidth.ToString() + "x" + TerminalHeight.ToString();
             Terminal.Open();
             Terminal.Set(options);
             Terminal.Color(this.BkColor);
@@ -296,13 +326,6 @@ namespace terminalhack
                 this.WordsTableRanges.Add(new KeyValuePair<int, int>(i, i + Word.Length - 1));
                 i += Word.Length;
             }
-        }
-        public bool TerminalBlocked()
-        {
-            if (this.Attempts < 1)
-                return true;
-            else
-                return false;
         }
 
         private void CursorWordIndexMath()
@@ -408,7 +431,8 @@ namespace terminalhack
                 this.IOLog.Add(">" + this.Strings[this.Language]["PleaseWait"]);
                 this.IOLog.Add(">" + this.Strings[this.Language]["WhileSystem"]);
                 this.IOLog.Add(">" + this.Strings[this.Language]["IsAccessed"]);
-                this.Unlock = true;
+                this.bUnlocked = true;
+                this.Attempts += 1;
                 return this.PasswordLength;
             }
             else if (this.WordsTable[CursorWordIndex].Length == this.PasswordLength)
@@ -444,15 +468,20 @@ namespace terminalhack
                 this.IOLog.Add(">" + this.Strings[this.Language]["InitLockout"]);
             }
 
+
+            if (this.Attempts < 1)
+                this.bLocked = true;
+
             return 0;
         }
         //! (бонусная задача) Сделать вывод а-ля fallout, т.е. буквы выводятся по очереди (у меня весь кадр формируется целиком и выводится сразу). 
 
-        public void ShowFrame()
+        private void UnlockScreen()
         {
-            //////////////////////////////////////////////////////////////
-            if (this.Unlock && !this.UnlockScreen)
+            if (this.bUnlocked && !this.bUnlockScreen)
             {
+                ShowGameField();
+                Terminal.Delay(500);
                 for (int frame = 0; frame < TerminalHeight; frame++)
                 {
                     Terminal.Color(this.BkColor);
@@ -507,10 +536,10 @@ namespace terminalhack
                     Terminal.Delay(rnd.Next(35, 88));
                 }
                 Terminal.Refresh();
-                this.UnlockScreen = true;
+                this.bUnlockScreen = true;
                 return;
             }
-            if (this.UnlockScreen)
+            if (this.bUnlockScreen)
             {
                 Terminal.Color(this.BkColor);
                 Terminal.Color(this.Color);
@@ -521,11 +550,16 @@ namespace terminalhack
                 string pass = "> "; for (int x = 0; x < this.PasswordLength; x++) pass += "*";
                 Terminal.Print(0, 6, pass.ToUpper());
                 Terminal.Refresh();
-                return;
             }
-            ////////////////////////////////////////////////////////
-            if (TerminalBlocked() && !this.BlockScreen)
+        }
+
+        private void LockScreen()
+        {
+
+            if (this.bLocked && !this.bBlockScreen)
             {
+                ShowGameField();
+                Terminal.Delay(500);
                 for (int frame = 0; frame < TerminalHeight; frame++)
                 {
                     Terminal.BkColor(this.BkColor);
@@ -564,10 +598,10 @@ namespace terminalhack
                 Terminal.Print(TerminalWidth / 2 - this.Strings[this.Language]["TerminalLocked"].Length / 2, TerminalHeight / 2 - 1, this.Strings[this.Language]["TerminalLocked"].ToUpper());
                 Terminal.Print(TerminalWidth / 2 - this.Strings[this.Language]["PleaseContactAnAdministrator"].Length / 2, TerminalHeight / 2 + 1, this.Strings[this.Language]["PleaseContactAnAdministrator"].ToUpper());
                 Terminal.Refresh();
-                this.BlockScreen = true;
+                this.bBlockScreen = true;
                 return;
             }
-            if (this.BlockScreen)
+            if (this.bBlockScreen)
             {
                 Terminal.BkColor(this.BkColor);
                 Terminal.Color(this.Color);
@@ -575,9 +609,10 @@ namespace terminalhack
                 Terminal.Print(TerminalWidth / 2 - this.Strings[this.Language]["TerminalLocked"].Length / 2, TerminalHeight / 2 - 1, this.Strings[this.Language]["TerminalLocked"].ToUpper());
                 Terminal.Print(TerminalWidth / 2 - this.Strings[this.Language]["PleaseContactAnAdministrator"].Length / 2, TerminalHeight / 2 + 1, this.Strings[this.Language]["PleaseContactAnAdministrator"].ToUpper());
                 Terminal.Refresh();
-                return;
             }
-            /////////////////////////////////////////////
+        }
+        private void ShowGameField()
+        {
             Terminal.BkColor(this.BkColor);
             Terminal.Color(this.Color);
             Terminal.Clear();
@@ -632,10 +667,19 @@ namespace terminalhack
                 AttemptsCountSquares += " ▚[+]▞";
             }
 
-            if (this.Attempts == 1)
-                Terminal.Print(0, 0, this.Strings[this.Language]["LockoutImminent"].ToUpper() + AttemptsCountSquares, Attempts);
-            else
+
+            if (this.Attempts > 1)
                 Terminal.Print(0, 0, this.Strings[this.Language]["AttemptsLeft"].ToUpper() + AttemptsCountSquares, Attempts);
+            if (this.Attempts == 1 && !this.bUnlocked)
+            {
+                Terminal.Print(0, 0, this.Strings[this.Language]["LockoutImminent"].ToUpper() + AttemptsCountSquares, Attempts);
+            }
+            if (this.Attempts == 1 && this.bUnlocked)
+            {
+                Terminal.Print(0, 0, this.Strings[this.Language]["LockoutImminent"].ToUpper() + AttemptsCountSquares, Attempts);
+                Terminal.ClearArea(0, 1, this.TerminalWidth, 1);
+            }
+
 
             if (this.WordsTable[CursorWordIndex] == "]")
             {
@@ -665,7 +709,58 @@ namespace terminalhack
             }
 
             Terminal.Refresh();
+        }
 
+        private void PrintingRow(int x, int y, string str, int minWait, int maxWait)
+        {
+            for (int i = 0; i < str.Length; i++)
+            {
+                Terminal.Put(x + i, y, str[i]);
+                Terminal.Delay(this.rnd.Next(minWait,maxWait));
+                Terminal.Refresh();
+            }
+        }
+        private void RobCoPrintingString(int x, int y, string str)
+        {
+            PrintingRow(x, y, str, 15, 18);
+        }
+        private void UserPrintingString(int x, int y, string str)
+        {
+            PrintingRow(x, y, str, 35, 88);
+        }
+        private void EnteringScreen()
+        {
+            if (this.bLaunching)
+            {
+                RobCoPrintingString(0, 0, this.Strings[this.Language]["WelcomeToRobco"].ToUpper());
+                Terminal.Delay(250);
+
+                Terminal.BkColor(this.BkColor);
+                Terminal.Color(this.Color);
+                Terminal.Delay(500);
+                Terminal.Clear();
+                Terminal.Refresh();
+                this.bBlockScreen = true;
+            }
+        }
+        public void ShowFrame()
+        {
+            if (this.bUnlocked)
+            {
+                this.UnlockScreen();
+            }
+            else if (this.bLocked)
+            {
+                this.LockScreen();
+            }
+            else if (this.bLaunching)
+            {
+                EnteringScreen();
+                this.bLaunching = false;
+            } else
+            {
+                ShowGameField();
+            }
 
         }
         private static int FlatteringCursor(System.Drawing.Point CursorPoint)
@@ -707,62 +802,11 @@ namespace terminalhack
                 this.Cursor.Y = this.Cursor.Y - DumpHeight / 2;
                 this.Cursor.X = DumpHeight;
             }
-            //this.Cursor.X = Tor(0, DumpWidth - 1, this.Cursor.X);
             this.Cursor.Y = this.Cursor.Y < 0 ? 0 : this.Cursor.Y;
             this.Cursor.Y = this.Cursor.Y >= DumpHeight ? DumpHeight - 1 : this.Cursor.Y;
 
             this.Cursor.X = this.Cursor.X < 0 ? 0 : this.Cursor.X;
             this.Cursor.X = this.Cursor.X >= DumpWidth ? DumpWidth - 1 : this.Cursor.X;
-            /*
-            //this.Cursor.X += MoveVector.X * this.WordsTable[this.CursorWordIndex].Length;
-            if (MoveVector.X > 0)
-            {
-                //this.Cursor.X = this.WordsTableRanges[this.CursorWordIndex].Value % DumpWidth + 1;
-                if ((this.WordsTableRanges[this.CursorWordIndex].Value + 1) / DumpWidth > this.CursorWordIndex / DumpWidth)
-                {
-                    this.Cursor.X = this.CursorWordIndex / DumpWidth + 1;
-                }
-                else
-                {
-                    this.Cursor.X = this.WordsTableRanges[this.CursorWordIndex].Value % DumpWidth + 1;
-                }
-
-                //this.Cursor.Y = (this.WordsTableRanges[this.CursorWordIndex].Value+1) / DumpWidth;
-            }
-            if (MoveVector.X < 0)
-            {
-                if ((this.WordsTableRanges[this.CursorWordIndex].Key - 1) / DumpWidth < this.CursorWordIndex / DumpWidth)
-                {
-                    this.Cursor.X = this.CursorWordIndex / DumpWidth - 1;
-                }
-                else
-                {
-                    this.Cursor.X = this.WordsTableRanges[this.CursorWordIndex].Value % DumpWidth - 1;
-                }
-                //this.Cursor.X = this.WordsTableRanges[this.CursorWordIndex].Key % 12 - 1;
-                //this.Cursor.Y = (this.WordsTableRanges[this.CursorWordIndex].Key - 1) / DumpWidth;
-            }
-
-            this.Cursor.Y += MoveVector.Y;//ДОДЕЛАТЬ СИСТЕМУ КУРСОРА ГОВНА
-
-            if (this.Cursor.X >= DumpWidth && this.Cursor.Y < DumpHeight / 2)
-            {
-                this.Cursor.Y = this.Cursor.Y + DumpHeight / 2;
-                this.Cursor.X = 0;
-            }
-            else
-            if (this.Cursor.X < 0 && this.Cursor.Y >= DumpHeight / 2)
-            {
-                this.Cursor.Y = this.Cursor.Y - DumpHeight / 2;
-                this.Cursor.X = DumpHeight;
-            }
-            //this.Cursor.X = Tor(0, DumpWidth - 1, this.Cursor.X);
-            this.Cursor.Y = this.Cursor.Y < 0 ? 0 : this.Cursor.Y;
-            this.Cursor.Y = this.Cursor.Y >= DumpHeight ? DumpHeight - 1 : this.Cursor.Y;
-
-            this.Cursor.X = this.Cursor.X < 0 ? 0 : this.Cursor.X;
-            this.Cursor.X = this.Cursor.X >= DumpWidth ? DumpWidth - 1 : this.Cursor.X;
-            */
             this.CursorFlat = FlatteringCursor(this.Cursor);
             CursorWordIndexMath();
         }

@@ -34,7 +34,7 @@ namespace terminalhack
             Settings = JsonConvert.DeserializeObject<System.Collections.Generic.Dictionary<string, string>>(SettingsJson);
 
             HackGame GameSession = new HackGame(WordsDictionary,int.Parse(Settings["TerminalLevel"]), int.Parse(Settings["ScienceLevel"]),Settings["Language"].ToLower());
-
+            
             
             GameSession.SwitchColor(Settings["ColorTheme"].ToLower());//amber
             
@@ -70,7 +70,6 @@ namespace terminalhack
             //Terminal.Set("font: {0}, size={1}", Settings["Font"], Settings["FontSize"]);
             GameSession.GenerateWordsTable();
             GameSession.ShowFrame();
-            
             while (Terminal.HasInput() ? Terminal.Read() != Terminal.TK_CLOSE : true)
             {
                 int dx = 0;
