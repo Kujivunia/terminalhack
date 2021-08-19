@@ -201,7 +201,7 @@ namespace terminalhack
             StringsSr.Close();
             Strings = Newtonsoft.Json.JsonConvert.DeserializeObject<Dictionary<string, Dictionary<string, string>>>(StringsJson);
 
-            int MaxLogWidth = 0;
+            int MaxLogWidth = 12;
             List<string> TempList = new List<string>();
             TempList.Add("EntryDenied");
             TempList.Add("Correct");

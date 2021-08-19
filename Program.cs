@@ -34,6 +34,7 @@ namespace terminalhack
 
             void ShowMenu()
             {
+                string Square = "";
                 Terminal.BkColor(System.Drawing.Color.Blue);
                 Terminal.Color(System.Drawing.Color.Yellow);
                 Terminal.ClearArea(0, 0, (Terminal.TK_WIDTH / 2), 6);
@@ -43,6 +44,14 @@ namespace terminalhack
                 Terminal.Print(0, 3, "Language: |ru| |en|");
                 Terminal.Print(0, 4, "FontSize: |12| |18| |24|");
                 Terminal.Print(0, 5, "SlowMode: |ON| |OFF|");
+                
+                Terminal.ClearArea(17, 0, 21, 1);
+                Terminal.Print(18, 0, "┣┷┷┷┷╋┷┷┷┷╋┷┷┷┷╋┷┷┷┷┫");
+                Terminal.Print(18, 1, "┣┷┷┷┷╋┷┷┷┷╋┷┷┷┷╋┷┷┷┷┫");
+                //Terminal.Layer(1);
+                Terminal.Print(18 + int.Parse(Settings["ScienceLevel"])/5, 0, Square);
+                Terminal.Print(18 + int.Parse(Settings["TerminalLevel"]) / 5, 1, Square);
+                //Terminal.Layer(0);
                 Terminal.Color(System.Drawing.Color.Blue);
                 Terminal.BkColor(System.Drawing.Color.Yellow);
                 if (Settings["ColorTheme"].Equals("f3"))
@@ -138,43 +147,85 @@ namespace terminalhack
                         {
                             case 0:
                                 {
-                                    Terminal.ClearArea(12, 0, 4, 1);
-                                    Terminal.ReadStr(12, 0, ScienceLvlStr, 3);
-                                    if (ScienceLvlStr.ToString().Length < 1) ScienceLvlStr.Append("50");
-                                    Settings["ScienceLevel"] = (ScienceLvlStr.ToString());
-                                    if (int.Parse(Settings["ScienceLevel"]) < int.Parse(Settings["TerminalLevel"]))
+                                    if (mx<16)
                                     {
-                                        Settings["ScienceLevel"] = Settings["TerminalLevel"];
+                                        Terminal.ClearArea(12, 0, 4, 1);
+                                        Terminal.ReadStr(12, 0, ScienceLvlStr, 3);
+                                        if (ScienceLvlStr.ToString().Length < 1) ScienceLvlStr.Append("50");
+                                        Settings["ScienceLevel"] = (ScienceLvlStr.ToString());
+                                        if (int.Parse(Settings["ScienceLevel"]) < 0)
+                                        {
+                                            Settings["ScienceLevel"] = (0).ToString();
+                                        }
+                                        if (int.Parse(Settings["ScienceLevel"]) > 100)
+                                        {
+                                            Settings["ScienceLevel"] = (100).ToString();
+                                        }
+                                        if (int.Parse(Settings["ScienceLevel"]) < int.Parse(Settings["TerminalLevel"]))
+                                        {
+                                            Settings["TerminalLevel"] = Settings["ScienceLevel"];
+                                        }
+
                                     }
-                                    if (int.Parse(Settings["ScienceLevel"]) < 0)
+                                    else if(mx<(18+21))
                                     {
-                                        Settings["ScienceLevel"] = (0).ToString();
+                                        if (ScienceLvlStr.ToString().Length < 1) ScienceLvlStr.Append("50");
+                                        Settings["ScienceLevel"] = ((mx - 18) * 5).ToString();
+                                        if (int.Parse(Settings["ScienceLevel"]) < 0)
+                                        {
+                                            Settings["ScienceLevel"] = (0).ToString();
+                                        }
+                                        if (int.Parse(Settings["ScienceLevel"]) > 100)
+                                        {
+                                            Settings["ScienceLevel"] = (100).ToString();
+                                        }
+                                        if (int.Parse(Settings["ScienceLevel"]) < int.Parse(Settings["TerminalLevel"]))
+                                        {
+                                            Settings["TerminalLevel"] = Settings["ScienceLevel"];
+                                        }
                                     }
-                                    if (int.Parse(Settings["ScienceLevel"]) > 100)
-                                    {
-                                        Settings["ScienceLevel"] = (100).ToString();
-                                    }
+                                    
                                     break;
                                 }
                             case 1:
                                 {
-                                    Terminal.ClearArea(13, 1, 4, 1);
-                                    Terminal.ReadStr(13, 1, TerminalLvlStr, 3);
-                                    if (TerminalLvlStr.ToString().Length < 1) TerminalLvlStr.Append("50");
-                                    Settings["TerminalLevel"] = (TerminalLvlStr.ToString());
-                                    if (int.Parse(Settings["ScienceLevel"]) < int.Parse(Settings["TerminalLevel"]))
+                                    if (mx < 17)
                                     {
-                                        Settings["ScienceLevel"] = Settings["TerminalLevel"];
+                                        Terminal.ClearArea(13, 1, 4, 1);
+                                        Terminal.ReadStr(13, 1, TerminalLvlStr, 3);
+                                        if (TerminalLvlStr.ToString().Length < 1) TerminalLvlStr.Append("50");
+                                        Settings["TerminalLevel"] = (TerminalLvlStr.ToString());
+                                        if (int.Parse(Settings["TerminalLevel"]) < 0)
+                                        {
+                                            Settings["TerminalLevel"] = (0).ToString();
+                                        }
+                                        if (int.Parse(Settings["TerminalLevel"]) > 100)
+                                        {
+                                            Settings["TerminalLevel"] = (100).ToString();
+                                        }
+                                        if (int.Parse(Settings["ScienceLevel"]) < int.Parse(Settings["TerminalLevel"]))
+                                        {
+                                            Settings["ScienceLevel"] = Settings["TerminalLevel"];
+                                        }
                                     }
-                                    if (int.Parse(Settings["TerminalLevel"]) < 0)
+                                    else if (mx < (18 + 21))
                                     {
-                                        Settings["TerminalLevel"] = (0).ToString();
+                                        if (TerminalLvlStr.ToString().Length < 1) TerminalLvlStr.Append("50");
+                                        Settings["TerminalLevel"] = ((mx - 18) * 5).ToString();
+                                        if (int.Parse(Settings["TerminalLevel"]) < 0)
+                                        {
+                                            Settings["TerminalLevel"] = (0).ToString();
+                                        }
+                                        if (int.Parse(Settings["TerminalLevel"]) > 100)
+                                        {
+                                            Settings["TerminalLevel"] = (100).ToString();
+                                        }
+                                        if (int.Parse(Settings["ScienceLevel"]) < int.Parse(Settings["TerminalLevel"]))
+                                        {
+                                            Settings["ScienceLevel"] = Settings["TerminalLevel"];
+                                        }
                                     }
-                                    if (int.Parse(Settings["TerminalLevel"]) > 100)
-                                    {
-                                        Settings["TerminalLevel"] = (100).ToString();
-                                    }
-                                    break;
+                                        break;
                                 }
                             case 2:
                                 {
