@@ -51,6 +51,8 @@ namespace terminalhack
         private Dictionary<string, Dictionary<string, string>> Strings = new Dictionary<string, Dictionary<string, string>>();
         private string Language = "ru";
         private bool bLaunching = true;
+        private bool bAfterLaunchingScreen = true;
+        bool bSlowMode = false;
         public void SwitchColor(string ColorTheme)
         {
             ColorTheme = ColorTheme.ToLower();
@@ -162,8 +164,9 @@ namespace terminalhack
 
             return result;
         }
-        public HackGame(List<string> WordsList, int TerminalLevel = 50, int ScienceLevel = 50, string Language = "ru")
+        public HackGame(List<string> WordsList, int TerminalLevel = 50, int ScienceLevel = 50, string Language = "ru", bool bSlowMode=false)
         {
+            this.bSlowMode = bSlowMode;
             this.OffsetStart = rnd.Next(OffsetMin, OffsetMax);
             this.PasswordLength = 4 + 2 * (TerminalLevel / 25);
             this.WordCount = this.DudsAndPasswordCount(ScienceLevel, TerminalLevel);
@@ -186,62 +189,6 @@ namespace terminalhack
                 this.WordsDict.Add(item);
             }
 
-            /*
-            Strings.Add("ru", new Dictionary<string, string>());
-            Strings.Add("en", new Dictionary<string, string>());
-
-            Strings["ru"].Add("EnterPassword", "введите пароль");
-            Strings["en"].Add("EnterPassword", "enter password now");
-
-            Strings["ru"].Add("WelcomeToRobco", "welcome to robco industries (tm) termlink");
-            Strings["en"].Add("WelcomeToRobco", "welcome to robco industries (tm) termlink");
-
-            Strings["ru"].Add("LogonAdmin", "> logon admin");
-            Strings["en"].Add("LogonAdmin", "> logon admin");
-
-            Strings["ru"].Add("EntryDenied", "Отказ в доступе.");
-            Strings["en"].Add("EntryDenied", "Entry denied.");
-
-            Strings["ru"].Add("Correct", "правильно.");
-            Strings["en"].Add("Correct", "correct.");
-
-            Strings["ru"].Add("Allowance", "Пользование");
-            Strings["en"].Add("Allowance", "Allowance");
-
-            Strings["ru"].Add("Replenished", "вновь разрешено.");
-            Strings["en"].Add("Replenished", "replenished.");
-
-            Strings["ru"].Add("DudRemoved", "Заглушка удалена.");
-            Strings["en"].Add("DudRemoved", "Dud removed.");
-
-            Strings["ru"].Add("PleaseWait", "Пожалуйста,");
-            Strings["en"].Add("PleaseWait", "Please wait");
-
-            Strings["ru"].Add("ExactMatch", "Точно!");
-            Strings["en"].Add("ExactMatch", "Exact match!");
-
-            Strings["ru"].Add("WhileSystem", "подождите");
-            Strings["en"].Add("WhileSystem", "while system");
-
-            Strings["ru"].Add("IsAccessed", "входа в систему.");
-            Strings["en"].Add("IsAccessed", "is accessed.");
-
-            Strings["ru"].Add("InitLockout", "Блокировка начата.");
-            Strings["en"].Add("InitLockout", "Init lockout.");
-
-            Strings["ru"].Add("TerminalLocked", "терминал заблокирован");
-            Strings["en"].Add("TerminalLocked", "terminal locked");
-
-            Strings["ru"].Add("PleaseContactAnAdministrator", "пожалуйста, свяжитесь с администратором");
-            Strings["en"].Add("PleaseContactAnAdministrator", "please, contact an administrator");
-
-
-            Strings["ru"].Add("AttemptsLeft", "robco industries (tm) termlink protocol\nвведите пароль\n\n{0} попытки осталось:");
-            Strings["en"].Add("AttemptsLeft", "robco industries (tm) termlink protocol\nenter password now\n\n{0} attempt(s) left:");
-
-            Strings["ru"].Add("LockoutImminent", "robco industries (tm) termlink protocol\n!!! предупреждение: терминал может быть заблокирован !!!\n\n{0} попытки осталось:");
-            Strings["en"].Add("LockoutImminent", "robco industries (tm) termlink protocol\n!!! warning: lockout imminent !!!\n\n{0} attempt(s) left:");
-            */
             /* 
             string Stringsqwe = Newtonsoft.Json.JsonConvert.SerializeObject(Strings);
             System.IO.StreamWriter StringsSr = new System.IO.StreamWriter("Strings.json");
@@ -446,6 +393,8 @@ namespace terminalhack
                 this.IOLog.Add(">" + this.WordsTable[CursorWordIndex].ToUpper());
                 this.IOLog.Add(">" + this.Strings[this.Language]["EntryDenied"]);
                 this.IOLog.Add(">" + Bulls + "/" + this.PasswordLength + " " + this.Strings[this.Language]["Correct"]);
+                if (this.Attempts < 1)
+                    this.bLocked = true;
                 return Bulls;
             }
             else
@@ -467,15 +416,12 @@ namespace terminalhack
             {
                 this.IOLog.Add(">" + this.Strings[this.Language]["InitLockout"]);
             }
-
-
             if (this.Attempts < 1)
                 this.bLocked = true;
 
             return 0;
         }
         //! (бонусная задача) Сделать вывод а-ля fallout, т.е. буквы выводятся по очереди (у меня весь кадр формируется целиком и выводится сразу). 
-
         private void UnlockScreen()
         {
             if (this.bUnlocked && !this.bUnlockScreen)
@@ -518,23 +464,33 @@ namespace terminalhack
                 Terminal.Color(this.Color);
                 Terminal.Clear();
 
-                Terminal.Print(0, 0, this.Strings[this.Language]["WelcomeToRobco"].ToUpper());
+                //Terminal.Print(0, 0, this.Strings[this.Language]["WelcomeToRobco"].ToUpper());
+                RobCoPrintingString(0, 0, this.Strings[this.Language]["WelcomeToRobco"].ToUpper());
                 Terminal.Refresh();
-                for (int x = 0; x < this.Strings[this.Language]["LogonAdmin"].Length; x++)
-                {
-                    Terminal.Put(x, 2, this.Strings[this.Language]["LogonAdmin"].ToUpper()[x]);
-                    Terminal.Refresh();
-                    Terminal.Delay(rnd.Next(35, 88));
-                }
+                Terminal.Print(0, 2, "> ");
+                Terminal.Delay(150);
+                Terminal.Refresh();
+                //for (int x = 0; x < this.Strings[this.Language]["LogonAdmin"].Length; x++)
+                //{
+                UserPrintingString(2, 2, this.Strings[this.Language]["LogonAdmin"].ToUpper());
+                //Terminal.Put(x, 2, this.Strings[this.Language]["LogonAdmin"].ToUpper()[x]);
+                //Terminal.Refresh();
+                //Terminal.Delay(rnd.Next(35, 88));
+                //}
                 Terminal.Print(0, 4, this.Strings[this.Language]["EnterPassword"].ToUpper());
                 Terminal.Refresh();
-                string pass = "> "; for (int x = 0; x < this.PasswordLength; x++) pass += "*";
-                for (int x = 0; x < pass.Length; x++)
-                {
-                    Terminal.Put(x, 6, pass[x]);
-                    Terminal.Refresh();
-                    Terminal.Delay(rnd.Next(35, 88));
-                }
+                string pass = "";
+                for (int x = 0; x < this.PasswordLength; x++) pass += "*";
+                Terminal.Print(0, 6, "> ");
+                Terminal.Refresh();
+                Terminal.Delay(150);
+                UserPrintingString(2, 6, pass.ToString());
+                //for (int x = 0; x < pass.Length; x++)
+                //{
+                //    Terminal.Put(x, 6, pass[x]);
+                //    Terminal.Refresh();
+                //    Terminal.Delay(rnd.Next(35, 88));
+                //}
                 Terminal.Refresh();
                 this.bUnlockScreen = true;
                 return;
@@ -545,14 +501,14 @@ namespace terminalhack
                 Terminal.Color(this.Color);
                 Terminal.Clear();
                 Terminal.Print(0, 0, this.Strings[this.Language]["WelcomeToRobco"].ToUpper());
-                Terminal.Print(0, 2, this.Strings[this.Language]["LogonAdmin"].ToUpper());
+                Terminal.Print(0, 2, "> ");
+                Terminal.Print(2, 2, this.Strings[this.Language]["LogonAdmin"].ToUpper());
                 Terminal.Print(0, 4, this.Strings[this.Language]["EnterPassword"].ToUpper());
                 string pass = "> "; for (int x = 0; x < this.PasswordLength; x++) pass += "*";
                 Terminal.Print(0, 6, pass.ToUpper());
                 Terminal.Refresh();
             }
         }
-
         private void LockScreen()
         {
 
@@ -595,8 +551,8 @@ namespace terminalhack
                 Terminal.BkColor(this.BkColor);
                 Terminal.Color(this.Color);
                 Terminal.Clear();
-                Terminal.Print(TerminalWidth / 2 - this.Strings[this.Language]["TerminalLocked"].Length / 2, TerminalHeight / 2 - 1, this.Strings[this.Language]["TerminalLocked"].ToUpper());
-                Terminal.Print(TerminalWidth / 2 - this.Strings[this.Language]["PleaseContactAnAdministrator"].Length / 2, TerminalHeight / 2 + 1, this.Strings[this.Language]["PleaseContactAnAdministrator"].ToUpper());
+                RobCoPrintingString(TerminalWidth / 2 - this.Strings[this.Language]["TerminalLocked"].Length / 2, TerminalHeight / 2 - 1, this.Strings[this.Language]["TerminalLocked"].ToUpper());
+                RobCoPrintingString(TerminalWidth / 2 - this.Strings[this.Language]["PleaseContactAnAdministrator"].Length / 2, TerminalHeight / 2 + 1, this.Strings[this.Language]["PleaseContactAnAdministrator"].ToUpper()); ;
                 Terminal.Refresh();
                 this.bBlockScreen = true;
                 return;
@@ -613,138 +569,259 @@ namespace terminalhack
         }
         private void ShowGameField()
         {
+
             Terminal.BkColor(this.BkColor);
             Terminal.Color(this.Color);
             Terminal.Clear();
-            int i = 0;
+
             int CurrentWordIndex = 0;
+            int i = 0;
             bool SecretCombinationsActive = false;
             KeyValuePair<int, int> SecretCombination = new KeyValuePair<int, int>();
-            foreach (var Word in this.WordsTable)
+
+            if (this.bAfterLaunchingScreen && bSlowMode)
             {
-                if (OpenBrackets.Contains(Word) && !(SecretCombinationsActive))
+
+                string AttemptsCountSquares = "";
+                for (int sq = 0; sq < this.Attempts; sq++)
                 {
-                    SecretCombination = SearchSecretCombinations(CurrentWordIndex);
-                    SecretCombinationsActive = true;
+                    AttemptsCountSquares += " " + this.Strings[this.Language]["Square"];
                 }
-                if (this.CursorWordIndex == CurrentWordIndex || (this.CursorWordIndex == SecretCombination.Key && SecretCombination.Key != SecretCombination.Value && (CurrentWordIndex >= SecretCombination.Key && CurrentWordIndex <= SecretCombination.Value)))
+                this.RobCoPrintingString(0, 0, this.Strings[this.Language]["RobcoIndustries"].ToUpper());
+                this.RobCoPrintingString(0, 1, this.Strings[this.Language]["EnterPassword"].ToUpper());
+                this.RobCoPrintingString(0, 3, this.Attempts.ToString() + this.Strings[this.Language]["AttemptsLeft"].ToUpper().Substring(3) + AttemptsCountSquares);
+
+                string[,] TempWordTable = new string[TerminalWidth, TerminalHeight];
+
+                i = 0;
+                foreach (var Address in HexAddresses)
                 {
-                    Terminal.Color(this.BkColor);
-                    Terminal.BkColor(this.Color);
-                }
-                else
-                {
-                    SecretCombinationsActive = false;
-                    Terminal.BkColor(this.BkColor);
-                    Terminal.Color(this.Color);
-                }
-                foreach (var Char in Word)
-                {
-                    if ((int)(i / DumpWidth) < DumpHeight / 2)
-                        Terminal.Print((int)(i % DumpWidth) + 7, (int)(i / DumpWidth) + (TerminalHeight - DumpHeight / 2), Char.ToString() == "]" || Char.ToString() == "[" ? Char.ToString() + Char.ToString() : Char.ToString().ToUpper());
+                    if (i < DumpHeight / 2)
+                        Terminal.Print(0, (int)(i) + (TerminalHeight - DumpHeight / 2), Address.ToString());
                     else
-                        Terminal.Print((int)(i % DumpWidth) + 20 + 7, (int)(i / DumpWidth) + (TerminalHeight - DumpHeight / 2) - DumpHeight / 2, Char.ToString() == "]" || Char.ToString() == "[" ? Char.ToString() + Char.ToString() : Char.ToString().ToUpper());
+                        Terminal.Print(20, (int)(i) + (TerminalHeight - DumpHeight / 2) - DumpHeight / 2, Address.ToString());
+
+                        Terminal.Refresh();
                     i++;
                 }
-
-                CurrentWordIndex++;
-            }
-            i = 0;
-            Terminal.BkColor(this.BkColor);
-            Terminal.Color(this.Color);
-            foreach (var Address in HexAddresses)
-            {
-                if (i < DumpHeight / 2)
-                    Terminal.Print(0, (int)(i) + (TerminalHeight - DumpHeight / 2), Address.ToString());
-                else
-                    Terminal.Print(20, (int)(i) + (TerminalHeight - DumpHeight / 2) - DumpHeight / 2, Address.ToString());
-                i++;
-            }
-
-            string AttemptsCountSquares = "";
-            for (int sq = 0; sq < this.Attempts; sq++)
-            {
-                AttemptsCountSquares += " ▚[+]▞";
-            }
-
-
-            if (this.Attempts > 1)
-                Terminal.Print(0, 0, this.Strings[this.Language]["AttemptsLeft"].ToUpper() + AttemptsCountSquares, Attempts);
-            if (this.Attempts == 1 && !this.bUnlocked)
-            {
-                Terminal.Print(0, 0, this.Strings[this.Language]["LockoutImminent"].ToUpper() + AttemptsCountSquares, Attempts);
-            }
-            if (this.Attempts == 1 && this.bUnlocked)
-            {
-                Terminal.Print(0, 0, this.Strings[this.Language]["LockoutImminent"].ToUpper() + AttemptsCountSquares, Attempts);
-                Terminal.ClearArea(0, 1, this.TerminalWidth, 1);
-            }
-
-
-            if (this.WordsTable[CursorWordIndex] == "]")
-            {
-                Terminal.Print(DumpWidth * 2 + 12 + 4, (TerminalHeight - 1), ">]]");
-            }
-            if (OpenBrackets.Contains(this.WordsTable[this.CursorWordIndex]))
-            {
-                Terminal.Print(DumpWidth * 2 + 12 + 4, (TerminalHeight - 1), ">");
-                for (int c = SearchSecretCombinations(this.CursorWordIndex).Key; c <= SearchSecretCombinations(this.CursorWordIndex).Value; c++)
+                i = 0;
+                foreach (var Word in this.WordsTable)
                 {
-                    Terminal.Print(DumpWidth * 2 + 12 + 4 + 1 + c - SearchSecretCombinations(this.CursorWordIndex).Key, (TerminalHeight - 1), this.WordsTable[c][0].ToString() == "]" || this.WordsTable[c][0].ToString() == "[" ? this.WordsTable[c].ToString() + this.WordsTable[c].ToString() : this.WordsTable[c].ToString().ToUpper());//квадратные скобки выводить парами
-                    //Terminal.Delay(rnd.Next(35, 88));
-                    //Terminal.Refresh();
-                    //! Побуквенный вывод в "поле ввода" при выборе слова из кучи. 
+                    foreach (var Char in Word)
+                    {
+                        if ((int)(i / DumpWidth) < DumpHeight / 2)
+                            Terminal.Print((int)(i % DumpWidth) + 7, (int)(i / DumpWidth) + (TerminalHeight - DumpHeight / 2), Char.ToString() == "]" || Char.ToString() == "[" ? Char.ToString() + Char.ToString() : Char.ToString().ToUpper());
+                        else
+                            Terminal.Print((int)(i % DumpWidth) + 20 + 7, (int)(i / DumpWidth) + (TerminalHeight - DumpHeight / 2) - DumpHeight / 2, Char.ToString() == "]" || Char.ToString() == "[" ? Char.ToString() + Char.ToString() : Char.ToString().ToUpper());
+                        i++;
+                    }
+                    if (i%12==0)
+                    {
+                        Terminal.Refresh();
+                    }
+                    
                 }
+                i = 0;
 
+
+
+                Terminal.Refresh();
+                this.bAfterLaunchingScreen = false;
             }
             else
             {
-                Terminal.Print(DumpWidth * 2 + 12 + 4, (TerminalHeight - 1), ">" + this.WordsTable[this.CursorWordIndex].ToUpper());
+                foreach (var Word in this.WordsTable)
+                {
+                    if (OpenBrackets.Contains(Word) && !(SecretCombinationsActive))
+                    {
+                        SecretCombination = SearchSecretCombinations(CurrentWordIndex);
+                        SecretCombinationsActive = true;
+                    }
+                    if (this.CursorWordIndex == CurrentWordIndex || (this.CursorWordIndex == SecretCombination.Key && SecretCombination.Key != SecretCombination.Value && (CurrentWordIndex >= SecretCombination.Key && CurrentWordIndex <= SecretCombination.Value)))
+                    {
+                        Terminal.Color(this.BkColor);
+                        Terminal.BkColor(this.Color);
+                    }
+                    else
+                    {
+                        SecretCombinationsActive = false;
+                        Terminal.BkColor(this.BkColor);
+                        Terminal.Color(this.Color);
+                    }
+                    foreach (var Char in Word)
+                    {
+                        if ((int)(i / DumpWidth) < DumpHeight / 2)
+                            Terminal.Print((int)(i % DumpWidth) + 7, (int)(i / DumpWidth) + (TerminalHeight - DumpHeight / 2), Char.ToString() == "]" || Char.ToString() == "[" ? Char.ToString() + Char.ToString() : Char.ToString().ToUpper());
+                        else
+                            Terminal.Print((int)(i % DumpWidth) + 20 + 7, (int)(i / DumpWidth) + (TerminalHeight - DumpHeight / 2) - DumpHeight / 2, Char.ToString() == "]" || Char.ToString() == "[" ? Char.ToString() + Char.ToString() : Char.ToString().ToUpper());
+                        i++;
+                    }
+
+                    CurrentWordIndex++;
+                }
+                i = 0;
+                Terminal.BkColor(this.BkColor);
+                Terminal.Color(this.Color);
+                foreach (var Address in HexAddresses)
+                {
+                    if (i < DumpHeight / 2)
+                        Terminal.Print(0, (int)(i) + (TerminalHeight - DumpHeight / 2), Address.ToString());
+                    else
+                        Terminal.Print(20, (int)(i) + (TerminalHeight - DumpHeight / 2) - DumpHeight / 2, Address.ToString());
+                    i++;
+                }
+
+                string AttemptsCountSquares = "";
+                for (int sq = 0; sq < this.Attempts; sq++)
+                {
+                    AttemptsCountSquares += " " + this.Strings[this.Language]["Square"];
+                }
+
+
+                if (this.Attempts > 1)
+                {
+                    Terminal.Print(0, 0, this.Strings[this.Language]["RobcoIndustries"].ToUpper());
+                    Terminal.Print(0, 1, this.Strings[this.Language]["EnterPassword"].ToUpper());
+                    Terminal.Print(0, 3, this.Strings[this.Language]["AttemptsLeft"].ToUpper() + AttemptsCountSquares, Attempts);
+                }
+                if (this.Attempts <= 1 && !this.bUnlocked)
+                {
+                    Terminal.Print(0, 0, this.Strings[this.Language]["RobcoIndustries"].ToUpper());
+                    //if (System.DateTime.Now.Millisecond<500)
+                    //{
+                        Terminal.Print(0, 1, this.Strings[this.Language]["LockoutImminent"].ToUpper());
+                    //}
+                    Terminal.Print(0, 3, this.Strings[this.Language]["AttemptsLeft"].ToUpper() + AttemptsCountSquares, Attempts);
+
+                }
+                if (this.Attempts >= 1 && this.bUnlocked)
+                {
+                    Terminal.Print(0, 0, this.Strings[this.Language]["RobcoIndustries"].ToUpper());
+                    Terminal.Print(0, 3, this.Strings[this.Language]["AttemptsLeft"].ToUpper() + AttemptsCountSquares, Attempts);
+                }
+
+
+                if (this.WordsTable[CursorWordIndex] == "]")
+                {
+                    Terminal.Print(DumpWidth * 2 + 12 + 4, (TerminalHeight - 1), ">]]");
+                    //Terminal.Print(DumpWidth * 2 + 12 + 4, (TerminalHeight - 1), ">");
+                    //Terminal.Refresh();
+                    //this.UserPrintingString(DumpWidth * 2 + 12 + 4+1, (TerminalHeight - 1), "]]");
+                }
+                if (OpenBrackets.Contains(this.WordsTable[this.CursorWordIndex]))
+                {
+                    Terminal.Print(DumpWidth * 2 + 12 + 4, (TerminalHeight - 1), ">");
+                    //string SecretCombinationStr = "";
+                    for (int c = SearchSecretCombinations(this.CursorWordIndex).Key; c <= SearchSecretCombinations(this.CursorWordIndex).Value; c++)
+                    {
+                        //SecretCombinationStr += this.WordsTable[c][0].ToString() == "]" || this.WordsTable[c][0].ToString() == "[" ? this.WordsTable[c].ToString() + this.WordsTable[c].ToString() : this.WordsTable[c].ToString().ToUpper();
+                        Terminal.Print(DumpWidth * 2 + 12 + 4 + 1 + c - SearchSecretCombinations(this.CursorWordIndex).Key, (TerminalHeight - 1), this.WordsTable[c][0].ToString() == "]" || this.WordsTable[c][0].ToString() == "[" ? this.WordsTable[c].ToString() + this.WordsTable[c].ToString() : this.WordsTable[c].ToString().ToUpper());//квадратные скобки выводить парами
+                                                                                                                                                                                                                                                                                                                                                //Terminal.Delay(rnd.Next(35, 88));
+                                                                                                                                                                                                                                                                                                                                                //Terminal.Refresh();
+                                                                                                                                                                                                                                                                                                                                                //! Побуквенный вывод в "поле ввода" при выборе слова из кучи. 
+                    }
+                    //this.UserPrintingString(DumpWidth * 2 + 12 + 4 + 1 - SearchSecretCombinations(this.CursorWordIndex).Key, (TerminalHeight - 1), SecretCombinationStr);//квадратные скобки выводить парами
+
+
+                }
+                else
+                {
+                    Terminal.Print(DumpWidth * 2 + 12 + 4, (TerminalHeight - 1), ">" + this.WordsTable[this.CursorWordIndex].ToUpper());
+                    //Terminal.Print(DumpWidth * 2 + 12 + 4, (TerminalHeight - 1), ">");
+                    //Terminal.Refresh();
+                    //this.UserPrintingString(DumpWidth * 2 + 12 + 4+1, (TerminalHeight - 1), this.WordsTable[this.CursorWordIndex].ToUpper());
+                }
+
+
+                for (int d = this.IOLog.Count() - DumpHeight / 2 + 2 < 0 ? 0 : this.IOLog.Count() - DumpHeight / 2 + 2; d < this.IOLog.Count(); d++)
+                {
+                    Terminal.Print(DumpWidth * 2 + 12 + 4, TerminalHeight - this.IOLog.Count() + d - 2, this.IOLog[d]);
+                    //this.UserPrintingString(DumpWidth * 2 + 12 + 4, TerminalHeight - this.IOLog.Count() + d - 2, this.IOLog[d]);
+                }
+
+                Terminal.Refresh();
             }
-
-
-            for (int d = this.IOLog.Count() - DumpHeight / 2 + 2 < 0 ? 0 : this.IOLog.Count() - DumpHeight / 2 + 2; d < this.IOLog.Count(); d++)
-            {
-                Terminal.Print(DumpWidth * 2 + 12 + 4, TerminalHeight - this.IOLog.Count() + d - 2, this.IOLog[d]);
-            }
-
-            Terminal.Refresh();
         }
-
         private void PrintingRow(int x, int y, string str, int minWait, int maxWait)
         {
             for (int i = 0; i < str.Length; i++)
             {
-                Terminal.Put(x + i, y, str[i]);
-                Terminal.Delay(this.rnd.Next(minWait,maxWait));
+                if (str[i].ToString().Equals("\n"))
+                {
+                    y++;
+                    x = -i - 1;
+                    continue;
+                }
+                Terminal.Print(x + i, y, this.Strings[this.Language]["Cursor"]);
+                Terminal.Refresh();
+                Terminal.Delay(this.rnd.Next(minWait, maxWait));
+                Terminal.Print(x + i, y, str[i].ToString());
                 Terminal.Refresh();
             }
         }
         private void RobCoPrintingString(int x, int y, string str)
         {
-            PrintingRow(x, y, str, 15, 18);
+            PrintingRow(x, y, str, 1, 3);
         }
         private void UserPrintingString(int x, int y, string str)
         {
-            PrintingRow(x, y, str, 35, 88);
+            PrintingRow(x, y, str, 16, 32);
         }
         private void EnteringScreen()
         {
             if (this.bLaunching)
             {
-                RobCoPrintingString(0, 0, this.Strings[this.Language]["WelcomeToRobco"].ToUpper());
-                Terminal.Delay(250);
+                if (bSlowMode)
+                {
+                    RobCoPrintingString(0, 0, this.Strings[this.Language]["WelcomeToRobco"].ToUpper());
+                    Terminal.Delay(150);
+                    Terminal.Put(0, 2, '>'); Terminal.Refresh(); Terminal.Delay(150);
+                    UserPrintingString(1, 2, this.Strings[this.Language]["SetTerminalInquire"].ToUpper());
+                    RobCoPrintingString(0, 4, this.Strings[this.Language]["RITV300"].ToUpper());
+                    Terminal.Put(0, 6, '>'); Terminal.Refresh(); Terminal.Delay(150);
+                    UserPrintingString(1, 6, this.Strings[this.Language]["SetFileProtectionOwner"].ToUpper());
+                    Terminal.Put(0, 7, '>'); Terminal.Refresh(); Terminal.Delay(150);
+                    UserPrintingString(1, 7, this.Strings[this.Language]["SetHaltRestart"].ToUpper());
+                    RobCoPrintingString(0, 9, this.Strings[this.Language]["BootAgentInfo"]);
+                    Terminal.Put(0, 17, '>'); Terminal.Refresh(); Terminal.Delay(150);
+                    UserPrintingString(1, 17, this.Strings[this.Language]["RunDebugAccounts"].ToUpper());
 
-                Terminal.BkColor(this.BkColor);
-                Terminal.Color(this.Color);
-                Terminal.Delay(500);
-                Terminal.Clear();
-                Terminal.Refresh();
-                this.bBlockScreen = true;
+                    Terminal.BkColor(this.BkColor);
+                    Terminal.Color(this.Color);
+                    Terminal.Delay(1000);
+                    Terminal.Clear();
+                    Terminal.Refresh();
+                }
+                else
+                {
+                    Terminal.Print(0, 0, this.Strings[this.Language]["WelcomeToRobco"].ToUpper());
+                    Terminal.Put(0, 2, '>');
+                    Terminal.Print(1, 2, this.Strings[this.Language]["SetTerminalInquire"].ToUpper());
+                    Terminal.Print(0, 4, this.Strings[this.Language]["RITV300"].ToUpper());
+                    Terminal.Put(0, 6, '>');
+                    Terminal.Print(1, 6, this.Strings[this.Language]["SetFileProtectionOwner"].ToUpper());
+                    Terminal.Put(0, 7, '>');
+                    Terminal.Print(1, 7, this.Strings[this.Language]["SetHaltRestart"].ToUpper());
+                    Terminal.Print(0, 9, this.Strings[this.Language]["BootAgentInfo"]);
+                    Terminal.Put(0, 17, '>');
+                    Terminal.Print(1, 17, this.Strings[this.Language]["RunDebugAccounts"].ToUpper());
+
+
+                    Terminal.Refresh();
+                    Terminal.BkColor(this.BkColor);
+                    Terminal.Color(this.Color);
+                    Terminal.Delay(1000);
+                    Terminal.Clear();
+                }
+
             }
         }
+
         public void ShowFrame()
         {
+            Terminal.BkColor(this.BkColor);
+            Terminal.Color(this.Color);
+            Terminal.Clear();
             if (this.bUnlocked)
             {
                 this.UnlockScreen();
@@ -756,8 +833,10 @@ namespace terminalhack
             else if (this.bLaunching)
             {
                 EnteringScreen();
+                
                 this.bLaunching = false;
-            } else
+            }
+            else
             {
                 ShowGameField();
             }
