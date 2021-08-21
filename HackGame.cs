@@ -201,7 +201,7 @@ namespace terminalhack
             StringsSr.Close();
             Strings = Newtonsoft.Json.JsonConvert.DeserializeObject<Dictionary<string, Dictionary<string, string>>>(StringsJson);
 
-            int MaxLogWidth = 12;
+            int MaxLogWidth = 12+2;
             List<string> TempList = new List<string>();
             TempList.Add("EntryDenied");
             TempList.Add("Correct");
@@ -345,13 +345,19 @@ namespace terminalhack
                 }
                 this.IOLog.Add(">" + BracketCombination);
                 UsedBracketsIndex.Add(UsedBracketsIndexFind(CursorWordIndex));
+                if (this.Duds.Count<1)
+                {
+                    this.Attempts++;
+                    this.IOLog.Add(">" + this.Strings[this.Language]["EntryDenied"]);
+                    return -1;
+                }
                 if (this.rnd.Next(100) < 50)
                 {
                     this.Attempts = 4;
 
                     this.IOLog.Add(">" + this.Strings[this.Language]["Allowance"]);
                     this.IOLog.Add(">" + this.Strings[this.Language]["Replenished"]);
-                    return -1;
+                    return -2;
                 }
                 else
                 {
@@ -367,7 +373,7 @@ namespace terminalhack
                     this.CursorWordIndexMath();
                     this.Attempts++;
                     this.IOLog.Add(">" + this.Strings[this.Language]["DudRemoved"]);
-                    return -2;
+                    return -3;
                 }
 
             }
@@ -473,6 +479,7 @@ namespace terminalhack
                 Terminal.BkColor(this.BkColor);
                 Terminal.Color(this.Color);
                 Terminal.Clear();
+                Terminal.Refresh();
             }
         }
         private void LockScreen()
@@ -496,7 +503,7 @@ namespace terminalhack
                             Terminal.Put(x, y, foo);
 
                         }
-                        Terminal.Delay(1);
+                        //Terminal.Delay(1);
                     }
                     Terminal.Layer(0);
                     Terminal.ClearArea(0, 0, TerminalWidth, TerminalHeight);
@@ -852,7 +859,7 @@ namespace terminalhack
             }
             else if (this.bLaunching)
             {
-                //EnteringScreen();
+                EnteringScreen();
 
                 this.bLaunching = false;
             }
