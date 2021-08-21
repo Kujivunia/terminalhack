@@ -147,8 +147,9 @@ namespace terminalhack
                         {
                             case 0:
                                 {
-                                    if (mx<16)
+                                    if (mx<18)//16
                                     {
+                                        /*
                                         Terminal.ClearArea(12, 0, 4, 1);
                                         Terminal.ReadStr(12, 0, ScienceLvlStr, 3);
                                         if (ScienceLvlStr.ToString().Length < 1) ScienceLvlStr.Append("50");
@@ -165,7 +166,7 @@ namespace terminalhack
                                         {
                                             Settings["TerminalLevel"] = Settings["ScienceLevel"];
                                         }
-
+                                        */
                                     }
                                     else if(mx<(18+21))
                                     {
@@ -189,8 +190,10 @@ namespace terminalhack
                                 }
                             case 1:
                                 {
-                                    if (mx < 17)
+                                    
+                                    if (mx < 18)//17
                                     {
+                                        /*
                                         Terminal.ClearArea(13, 1, 4, 1);
                                         Terminal.ReadStr(13, 1, TerminalLvlStr, 3);
                                         if (TerminalLvlStr.ToString().Length < 1) TerminalLvlStr.Append("50");
@@ -207,6 +210,7 @@ namespace terminalhack
                                         {
                                             Settings["ScienceLevel"] = Settings["TerminalLevel"];
                                         }
+                                    */
                                     }
                                     else if (mx < (18 + 21))
                                     {
@@ -309,6 +313,15 @@ namespace terminalhack
 
 
             Terminal.Set("input.filter = [keyboard, mouse]; window: title='RobCo Industries™ Termlink',icon='icon.ico';");
+            if (Settings["SlowMode"].ToLower().Equals("True"))
+            {
+                Terminal.Set("output.vsync = false");
+            }
+            else
+            {
+                Terminal.Set("output.vsync = true");
+            }
+
             try
             {
                 Terminal.Set("font: {0}, size={1}", Settings["Font"], Settings["FontSize"]);
@@ -337,7 +350,7 @@ namespace terminalhack
                     GameSession.ShowFrame();
                     while (Terminal.HasInput())
                     {
-                        TK = Terminal.Read();
+                        TK = Terminal.Read(); //Очистка очереди команд.
                     }
                     TK = Terminal.Read();
                     if (TK == Terminal.TK_LEFT || TK == Terminal.TK_RIGHT || TK == Terminal.TK_DOWN || TK == Terminal.TK_UP)
@@ -358,6 +371,15 @@ namespace terminalhack
                         GameSession.SwitchColor(Settings["ColorTheme"].ToLower());//amber
                         GameSession.ShowFrame();
                         GameSession.ShowFrame();
+                        Terminal.Set("input.filter = [keyboard, mouse]; window: title='RobCo Industries™ Termlink',icon='icon.ico';");
+                        if (Settings["SlowMode"].ToLower().Equals("True"))
+                        {
+                            Terminal.Set("output.vsync = false");
+                        }
+                        else
+                        {
+                            Terminal.Set("output.vsync = true");
+                        }
                     }
                     if (TK == Terminal.TK_CLOSE)
                     {
@@ -402,7 +424,6 @@ namespace terminalhack
                     }
                 }
 
-                //! очищать очередь команд здесь.
             }
             /*
             Thread ControlThread = new Thread(new ThreadStart(Control));
