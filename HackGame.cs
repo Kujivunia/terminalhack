@@ -427,7 +427,6 @@ namespace terminalhack
 
             return 0;
         }
-        //! (бонусная задача) Сделать вывод а-ля fallout, т.е. буквы выводятся по очереди (у меня весь кадр формируется целиком и выводится сразу). 
         private void UnlockScreen()
         {
             if (this.bUnlocked && !this.bUnlockScreen)

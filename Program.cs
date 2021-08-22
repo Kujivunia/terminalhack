@@ -13,7 +13,8 @@ namespace terminalhack
     class Programm
     {
         //public static HackGame GameSession;
-        //public bool bCanShowing;
+        public static bool bCanShowing = false;
+        private static HackGame GameSession;
         private static System.Collections.Generic.Dictionary<string, string> Menu(HackGame qwe)
         {
             System.Collections.Generic.Dictionary<string, string> Settings = JsonConvert.DeserializeObject<System.Collections.Generic.Dictionary<string, string>>(Read());
@@ -44,12 +45,12 @@ namespace terminalhack
                 Terminal.Print(0, 3, "Language: |ru| |en|");
                 Terminal.Print(0, 4, "FontSize: |12| |18| |24|");
                 Terminal.Print(0, 5, "SlowMode: |ON| |OFF|");
-                
+
                 Terminal.ClearArea(17, 0, 21, 1);
                 Terminal.Print(18, 0, "┣┷┷┷┷╋┷┷┷┷╋┷┷┷┷╋┷┷┷┷┫");
                 Terminal.Print(18, 1, "┣┷┷┷┷╋┷┷┷┷╋┷┷┷┷╋┷┷┷┷┫");
                 //Terminal.Layer(1);
-                Terminal.Print(18 + int.Parse(Settings["ScienceLevel"])/5, 0, Square);
+                Terminal.Print(18 + int.Parse(Settings["ScienceLevel"]) / 5, 0, Square);
                 Terminal.Print(18 + int.Parse(Settings["TerminalLevel"]) / 5, 1, Square);
                 //Terminal.Layer(0);
                 Terminal.Color(System.Drawing.Color.Blue);
@@ -147,7 +148,7 @@ namespace terminalhack
                         {
                             case 0:
                                 {
-                                    if (mx<18)//16
+                                    if (mx < 18)//16
                                     {
                                         /*
                                         Terminal.ClearArea(12, 0, 4, 1);
@@ -168,7 +169,7 @@ namespace terminalhack
                                         }
                                         */
                                     }
-                                    else if(mx<(18+21))
+                                    else if (mx < (18 + 21))
                                     {
                                         if (ScienceLvlStr.ToString().Length < 1) ScienceLvlStr.Append("50");
                                         Settings["ScienceLevel"] = ((mx - 18) * 5).ToString();
@@ -185,12 +186,12 @@ namespace terminalhack
                                             Settings["TerminalLevel"] = Settings["ScienceLevel"];
                                         }
                                     }
-                                    
+
                                     break;
                                 }
                             case 1:
                                 {
-                                    
+
                                     if (mx < 18)//17
                                     {
                                         /*
@@ -229,7 +230,7 @@ namespace terminalhack
                                             Settings["ScienceLevel"] = Settings["TerminalLevel"];
                                         }
                                     }
-                                        break;
+                                    break;
                                 }
                             case 2:
                                 {
@@ -270,180 +271,20 @@ namespace terminalhack
             Write(JsonConvert.SerializeObject(Settings));
             return Settings;
         }
-        static void Main(string[] args)
+        public static void Show()
         {
-
-            System.Collections.Generic.Dictionary<string, string> Settings = new Dictionary<string, string>();
-            Settings.Add("TerminalLevel", "50");
-            Settings.Add("ScienceLevel", "50");
-            Settings.Add("ColorTheme", "f3");
-            Settings.Add("Language", "ru");
-            Settings.Add("FontSize", "18");
-            Settings.Add("Font", "FixedsysRus.ttf");
-
-            bool MouseClickAvailable = false;
-
-            StreamReader sr = new StreamReader("common.json");
-            string json = sr.ReadToEnd();
-            sr.Close();
-            StreamReader SettingsSr = new StreamReader("Settings.json");
-            string SettingsJson = SettingsSr.ReadToEnd();
-            SettingsSr.Close();
-            List<string> WordsDictionary = JsonConvert.DeserializeObject<List<string>>(json).Where(item => item.Length >= 4 && item.Length <= 12).ToList();
-            Settings = JsonConvert.DeserializeObject<System.Collections.Generic.Dictionary<string, string>>(SettingsJson);
-
-            HackGame GameSession = new HackGame(WordsDictionary, int.Parse(Settings["TerminalLevel"]), int.Parse(Settings["ScienceLevel"]), Settings["Language"].ToLower(), bool.Parse(Settings["SlowMode"]));
-
-            System.IO.StreamReader StringsSr = new System.IO.StreamReader("Strings.json");
-            string StringsJson = StringsSr.ReadToEnd();
-            StringsSr.Close();
-            Dictionary<string, Dictionary<string, string>> Strings = Newtonsoft.Json.JsonConvert.DeserializeObject<Dictionary<string, Dictionary<string, string>>>(StringsJson);
-
-            GameSession.SwitchColor(Settings["ColorTheme"].ToLower());//amber
-
-                if (int.Parse(Settings["ScienceLevel"]) < int.Parse(Settings["TerminalLevel"]))
+            while (true)
+            {
+                if (bCanShowing)
                 {
-                    Terminal.Clear();
-                    Terminal.Print(Terminal.State(Terminal.TK_WIDTH) / 2 - Strings[Settings["Language"].ToLower()]["TooHard"].Length / 2, Terminal.State(Terminal.TK_HEIGHT) / 2, Strings[Settings["Language"].ToLower()]["TooHard"], int.Parse(Settings["TerminalLevel"]), int.Parse(Settings["ScienceLevel"]));
-                    Terminal.Refresh();
-                    //Settings = Menu(GameSession);
-                    Terminal.Read();
-                    return;
-                }
-
-
-            Terminal.Set("input.filter = [keyboard, mouse]; window: title='RobCo Industries™ Termlink',icon='icon.ico';");
-            if (Settings["SlowMode"].ToLower().Equals("True"))
-            {
-                Terminal.Set("output.vsync = false");
-            }
-            else
-            {
-                Terminal.Set("output.vsync = true");
-            }
-
-            try
-            {
-                Terminal.Set("font: {0}, size={1}", Settings["Font"], Settings["FontSize"]);
-            }
-            catch (System.Exception)
-            {
-                Terminal.Set("font:");
-            }
-
-            //Terminal.Set("font: {0}, size={1}", Settings["Font"], Settings["FontSize"]);
-            GameSession.GenerateWordsTable();
-            GameSession.ShowFrame();
-            GameSession.ShowFrame();
-            int TK = 0;
-            while (Terminal.HasInput() ? Terminal.Read() != Terminal.TK_CLOSE : true)
-            //while (TK != Terminal.TK_CLOSE)
-            {
-                int dx = 0;
-                int dy = 0;
-                int mx = -1;
-                int my = -1;
-
-                //if (Terminal.HasInput())
-                //! (бонусная задача) Добавить звуки. 
-                {//! Сделать нормальное приложение вокруг механики игры. А именно, починить управление (сейчас работает лишь частично). 
                     GameSession.ShowFrame();
-                    while (Terminal.HasInput())
-                    {
-                        TK = Terminal.Read(); //Очистка очереди команд.
-                    }
-                    TK = Terminal.Read();
-                    if (TK == Terminal.TK_LEFT || TK == Terminal.TK_RIGHT || TK == Terminal.TK_DOWN || TK == Terminal.TK_UP)
-                    {
-                        dx = TK == Terminal.TK_LEFT ? -1 : TK == Terminal.TK_RIGHT ? 1 : 0;
-                        dy = TK == Terminal.TK_UP ? -1 : TK == Terminal.TK_DOWN ? 1 : 0;
-                    }
-                    if (TK == Terminal.TK_A || TK == Terminal.TK_W || TK == Terminal.TK_D || TK == Terminal.TK_S)
-                    {
-                        dx = TK == Terminal.TK_A ? -1 : TK == Terminal.TK_D ? 1 : 0;
-                        dy = TK == Terminal.TK_W ? -1 : TK == Terminal.TK_S ? 1 : 0;
-                    }
-                    GameSession.MoveCursor(new System.Drawing.Point(dx, dy));
-                    if (TK == Terminal.TK_BACKSPACE)
-                    {
-                        GameSession = new HackGame(WordsDictionary, int.Parse(Settings["TerminalLevel"]), int.Parse(Settings["ScienceLevel"]), Settings["Language"].ToLower(), bool.Parse(Settings["SlowMode"]));
-                        GameSession.GenerateWordsTable();
-                        GameSession.SwitchColor(Settings["ColorTheme"].ToLower());//amber
-                        GameSession.ShowFrame();
-                        GameSession.ShowFrame();
-                        Terminal.Set("input.filter = [keyboard, mouse]; window: title='RobCo Industries™ Termlink',icon='icon.ico';");
-                        if (Settings["SlowMode"].ToLower().Equals("True"))
-                        {
-                            Terminal.Set("output.vsync = false");
-                        }
-                        else
-                        {
-                            Terminal.Set("output.vsync = true");
-                        }
-                    }
-                    if (TK == Terminal.TK_CLOSE)
-                    {
-                        Terminal.Close();
-                    }
-                    if (TK == Terminal.TK_ESCAPE)
-                    {
-                        Settings = Menu(GameSession);
-                        GameSession.SwitchColor(Settings["ColorTheme"].ToLower());
-                        Terminal.Set("input.filter = [keyboard, mouse]; window: title='RobCo Industries™ Termlink',icon='icon.ico';");
-                        try
-                        {
-                            Terminal.Set("font: {0}, size={1}", Settings["Font"], Settings["FontSize"]);
-                        }
-                        catch (System.Exception)
-                        {
-                            Terminal.Set("font:");
-                        }
-                        GameSession.ShowFrame();
-                    }
-                    if (TK == Terminal.TK_MOUSE_MOVE)
-                    {
-                        mx = Terminal.State(Terminal.TK_MOUSE_X);
-                        my = Terminal.State(Terminal.TK_MOUSE_Y);
-                        MouseClickAvailable = false;
-                        if (mx >= 0 && my >= 0) GameSession.MoveToCursor(new System.Drawing.Point(mx, my));
-                        if (((mx >= 7 && mx < 19) || (mx > 26 && mx < 39)) && my >= (21 - 32 / 2))
-                        {
-                            MouseClickAvailable = true;
-                        }
-                    }
-                    if (TK == Terminal.TK_ENTER || TK == Terminal.TK_SPACE || TK == Terminal.TK_E || TK == Terminal.TK_MOUSE_LEFT)
-                    {
-                        if (TK != Terminal.TK_MOUSE_LEFT)
-                        {
-                            int Bulls = GameSession.CheckWord();
-                        }
-                        if (TK == Terminal.TK_MOUSE_LEFT && MouseClickAvailable)
-                        {
-                            int Bulls = GameSession.CheckWord();
-                        }
-                    }
                 }
-
+                
             }
-            /*
-            Thread ControlThread = new Thread(new ThreadStart(Control));
-            Thread ShowThread = new Thread(new ThreadStart(Show));
-            ControlThread.Start();
-            ShowThread.Start();
-            */
-            /*
-            string hexValue = 27.ToString("X");
-            int decValue = int.Parse(hexValue, System.Globalization.NumberStyles.HexNumber);
-
-            string str = "";
-            Terminal.ReadStr(1, 1, ref str, 80);
-            Terminal.Print(1, 1, str.ToString());
-            Terminal.Close();
-            */
         }
-        /*
         public static void Control()
         {
+            ////////////////////////////////////////////////
             System.Collections.Generic.Dictionary<string, string> Settings = new Dictionary<string, string>();
             Settings.Add("TerminalLevel", "50");
             Settings.Add("ScienceLevel", "50");
@@ -498,7 +339,8 @@ namespace terminalhack
                 int dy = 0;
                 int mx = -1;
                 int my = -1;
-
+                bCanShowing = false;
+                System.Threading.Thread.Sleep(40);
                 //if (Terminal.HasInput())
                 //! (бонусная задача) Добавить звуки. 
                 {//! Сделать нормальное приложение вокруг механики игры. А именно, починить управление (сейчас работает лишь частично). 
@@ -547,17 +389,168 @@ namespace terminalhack
                         }
                     }
                 }
+                bCanShowing = true;
             }
-        }*/
-        /*
-        public static void Show()
-        {
-            while (true)
-            {
-                GameSession.ShowFrame();
-            }
+            ///////////////////////////////////////////////////////////////
         }
-        */
+        static void Main(string[] args)
+        {
+            System.Collections.Generic.Dictionary<string, string> Settings = new Dictionary<string, string>();
+            Settings.Add("TerminalLevel", "50");
+            Settings.Add("ScienceLevel", "50");
+            Settings.Add("ColorTheme", "f3");
+            Settings.Add("Language", "ru");
+            Settings.Add("FontSize", "18");
+            Settings.Add("Font", "FixedsysRus.ttf");
+
+            bool MouseClickAvailable = false;
+
+            StreamReader sr = new StreamReader("common.json");
+            string json = sr.ReadToEnd();
+            sr.Close();
+            StreamReader SettingsSr = new StreamReader("Settings.json");
+            string SettingsJson = SettingsSr.ReadToEnd();
+            SettingsSr.Close();
+            List<string> WordsDictionary = JsonConvert.DeserializeObject<List<string>>(json).Where(item => item.Length >= 4 && item.Length <= 12).ToList();
+            Settings = JsonConvert.DeserializeObject<System.Collections.Generic.Dictionary<string, string>>(SettingsJson);
+
+            GameSession = new HackGame(WordsDictionary, int.Parse(Settings["TerminalLevel"]), int.Parse(Settings["ScienceLevel"]), Settings["Language"].ToLower(), bool.Parse(Settings["SlowMode"]));
+
+            System.IO.StreamReader StringsSr = new System.IO.StreamReader("Strings.json");
+            string StringsJson = StringsSr.ReadToEnd();
+            StringsSr.Close();
+            Dictionary<string, Dictionary<string, string>> Strings = Newtonsoft.Json.JsonConvert.DeserializeObject<Dictionary<string, Dictionary<string, string>>>(StringsJson);
+
+            GameSession.SwitchColor(Settings["ColorTheme"].ToLower());//amber
+
+            if (int.Parse(Settings["ScienceLevel"]) < int.Parse(Settings["TerminalLevel"]))
+            {
+                Terminal.Clear();
+                Terminal.Print(Terminal.State(Terminal.TK_WIDTH) / 2 - Strings[Settings["Language"].ToLower()]["TooHard"].Length / 2, Terminal.State(Terminal.TK_HEIGHT) / 2, Strings[Settings["Language"].ToLower()]["TooHard"], int.Parse(Settings["TerminalLevel"]), int.Parse(Settings["ScienceLevel"]));
+                Terminal.Refresh();
+                Terminal.Read();
+                return;
+            }
+
+
+            Terminal.Set("input.filter = [keyboard, mouse]; window: title='RobCo Industries™ Termlink',icon='icon.ico';");
+            if (Settings["SlowMode"].ToLower().Equals("True"))
+            {
+                Terminal.Set("output.vsync = false");
+            }
+            else
+            {
+                Terminal.Set("output.vsync = true");
+            }
+
+            try
+            {
+                Terminal.Set("font: {0}, size={1}", Settings["Font"], Settings["FontSize"]);
+            }
+            catch (System.Exception)
+            {
+                Terminal.Set("font:");
+            }
+
+            GameSession.GenerateWordsTable();
+            GameSession.ShowFrame();
+            GameSession.ShowFrame();
+            int TK = 0;
+            /*
+            while (Terminal.HasInput() ? Terminal.Read() != Terminal.TK_CLOSE : true)
+            {
+                int dx = 0;
+                int dy = 0;
+                int mx = -1;
+                int my = -1;
+                GameSession.ShowFrame();
+                while (Terminal.HasInput())
+                {
+                    TK = Terminal.Read(); //Очистка очереди команд.
+                }
+                TK = Terminal.Read();
+                if (TK == Terminal.TK_LEFT || TK == Terminal.TK_RIGHT || TK == Terminal.TK_DOWN || TK == Terminal.TK_UP)
+                {
+                    dx = TK == Terminal.TK_LEFT ? -1 : TK == Terminal.TK_RIGHT ? 1 : 0;
+                    dy = TK == Terminal.TK_UP ? -1 : TK == Terminal.TK_DOWN ? 1 : 0;
+                }
+                if (TK == Terminal.TK_A || TK == Terminal.TK_W || TK == Terminal.TK_D || TK == Terminal.TK_S)
+                {
+                    dx = TK == Terminal.TK_A ? -1 : TK == Terminal.TK_D ? 1 : 0;
+                    dy = TK == Terminal.TK_W ? -1 : TK == Terminal.TK_S ? 1 : 0;
+                }
+                GameSession.MoveCursor(new System.Drawing.Point(dx, dy));
+                if (TK == Terminal.TK_BACKSPACE)
+                {
+                    GameSession = new HackGame(WordsDictionary, int.Parse(Settings["TerminalLevel"]), int.Parse(Settings["ScienceLevel"]), Settings["Language"].ToLower(), bool.Parse(Settings["SlowMode"]));
+                    GameSession.GenerateWordsTable();
+                    GameSession.SwitchColor(Settings["ColorTheme"].ToLower());//amber
+                    GameSession.ShowFrame();
+                    GameSession.ShowFrame();
+                    Terminal.Set("input.filter = [keyboard, mouse]; window: title='RobCo Industries™ Termlink',icon='icon.ico';");
+                    if (Settings["SlowMode"].ToLower().Equals("True"))
+                    {
+                        Terminal.Set("output.vsync = false");
+                    }
+                    else
+                    {
+                        Terminal.Set("output.vsync = true");
+                    }
+                }
+                if (TK == Terminal.TK_CLOSE)
+                {
+                    Terminal.Close();
+                }
+                if (TK == Terminal.TK_ESCAPE)
+                {
+                    Settings = Menu(GameSession);
+                    GameSession.SwitchColor(Settings["ColorTheme"].ToLower());
+                    Terminal.Set("input.filter = [keyboard, mouse]; window: title='RobCo Industries™ Termlink',icon='icon.ico';");
+                    try
+                    {
+                        Terminal.Set("font: {0}, size={1}", Settings["Font"], Settings["FontSize"]);
+                    }
+                    catch (System.Exception)
+                    {
+                        Terminal.Set("font:");
+                    }
+                    GameSession.ShowFrame();
+                }
+                if (TK == Terminal.TK_MOUSE_MOVE)
+                {
+                    mx = Terminal.State(Terminal.TK_MOUSE_X);
+                    my = Terminal.State(Terminal.TK_MOUSE_Y);
+                    MouseClickAvailable = false;
+                    if (mx >= 0 && my >= 0) GameSession.MoveToCursor(new System.Drawing.Point(mx, my));
+                    if (((mx >= 7 && mx < 19) || (mx > 26 && mx < 39)) && my >= (21 - 32 / 2))
+                    {
+                        MouseClickAvailable = true;
+                    }
+                }
+                if (TK == Terminal.TK_ENTER || TK == Terminal.TK_SPACE || TK == Terminal.TK_E || TK == Terminal.TK_MOUSE_LEFT)
+                {
+                    if (TK != Terminal.TK_MOUSE_LEFT)
+                    {
+                        int Bulls = GameSession.CheckWord();
+                    }
+                    if (TK == Terminal.TK_MOUSE_LEFT && MouseClickAvailable)
+                    {
+                        int Bulls = GameSession.CheckWord();
+                    }
+                }
+            }
+            */
+            Thread ControlThread = new Thread(new ThreadStart(Control));
+            Thread ShowThread = new Thread(new ThreadStart(Show));
+            ControlThread.Start();
+            ShowThread.Start();
+        }
+
+
     }
+
+
+
+
 
 }
