@@ -439,6 +439,23 @@ namespace terminalhack
         }
         private void UnlockScreen()
         {
+            string ReadUnlockScreen()
+            {
+                string result = " Terminal hacked. \n TerminalContent.txt not found. \n ← Backspace to restart";
+                try
+                {
+                    System.IO.StreamReader FileSr = new System.IO.StreamReader("TerminalContent.txt");
+                    result = FileSr.ReadToEnd();
+                    FileSr.Close();
+                }
+                catch (Exception)
+                {
+                result = " Terminal hacked. \n TerminalContent.txt not found. \n ← Backspace to restart";
+                }
+                
+                return result;
+            }
+
             if (this.bUnlocked && !this.bUnlockScreen)
             {
                 ShowGameField();
@@ -468,6 +485,10 @@ namespace terminalhack
                 Terminal.Color(this.Color);
                 Terminal.Clear();
 
+                //Показывает содержимое файла в случае успешного взлома. Статично.
+                Terminal.Print(0, 0, ReadUnlockScreen());
+                //
+
                 Terminal.Refresh();
                 this.bUnlockScreen = true;
                 return;
@@ -488,6 +509,11 @@ namespace terminalhack
                 Terminal.BkColor(this.BkColor);
                 Terminal.Color(this.Color);
                 Terminal.Clear();
+
+                //Показывает содержимое файла в случае успешного взлома. Статично.
+                Terminal.Print(0, 0, ReadUnlockScreen());
+                //
+
                 Terminal.Refresh();
             }
         }
