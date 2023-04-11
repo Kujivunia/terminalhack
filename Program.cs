@@ -14,7 +14,7 @@ namespace terminalhack
     {
         //public static HackGame GameSession;
         public static bool bCanShowing = false;
-        private static HackGame GameSession;
+        public static HackGame GameSession;
         private static System.Collections.Generic.Dictionary<string, string> Menu(HackGame qwe)
         {
             System.Collections.Generic.Dictionary<string, string> Settings = JsonConvert.DeserializeObject<System.Collections.Generic.Dictionary<string, string>>(Read());
@@ -107,9 +107,10 @@ namespace terminalhack
                 }
                 Terminal.Refresh();
             }
+
             ShowMenu();
 
-            bool MouseClickAvailable = false;
+            //bool MouseClickAvailable = false;
 
             {
                 int mx = -1;
@@ -120,9 +121,15 @@ namespace terminalhack
                 while (Terminal.HasInput() ? Terminal.Read() != Terminal.TK_CLOSE : true)
                 {
                     ShowMenu();
+                    //MouseClickAvailable = true;
                     while (Terminal.HasInput())
                     {
                         TK = Terminal.Read();
+                        if (TK == Terminal.TK_ESCAPE)
+                        {
+                            Write(JsonConvert.SerializeObject(Settings));
+                            return Settings;
+                        }
                     }
                     TK = Terminal.Read();
                     if (TK == Terminal.TK_CLOSE)
@@ -134,13 +141,15 @@ namespace terminalhack
                         Write(JsonConvert.SerializeObject(Settings));
                         return Settings;
                     }
-                    if (TK == Terminal.TK_MOUSE_MOVE)
+                    //if (TK == Terminal.TK_MOUSE_MOVE)
                     {
                         mx = Terminal.State(Terminal.TK_MOUSE_X);
                         my = Terminal.State(Terminal.TK_MOUSE_Y);
-                        MouseClickAvailable = true;
+                        //MouseClickAvailable = true;
 
                     }
+
+
 
                     if (TK == Terminal.TK_MOUSE_LEFT)
                     {
@@ -263,6 +272,11 @@ namespace terminalhack
                         }
                     }
 
+
+
+
+
+
                 }
 
 
@@ -279,7 +293,7 @@ namespace terminalhack
                 {
                     GameSession.ShowFrame();
                 }
-                
+
             }
         }
         public static void Control()
@@ -333,7 +347,8 @@ namespace terminalhack
                 Terminal.Set("font:");
             }
             int TK = 0;
-            while (Terminal.HasInput() ? Terminal.Read() != Terminal.TK_CLOSE : true)
+            TK = Terminal.Read();
+            while (/*Terminal.HasInput() ? Terminal.Read() != Terminal.TK_CLOSE : true*/TK != Terminal.TK_CLOSE)
             {
                 int dx = 0;
                 int dy = 0;
@@ -341,58 +356,57 @@ namespace terminalhack
                 int my = -1;
                 bCanShowing = false;
                 System.Threading.Thread.Sleep(40);
-                //if (Terminal.HasInput())
-                //! (бонусная задача) Добавить звуки. 
-                {//! Сделать нормальное приложение вокруг механики игры. А именно, починить управление (сейчас работает лишь частично). 
-                    TK = Terminal.Read();
-                    if (TK == Terminal.TK_LEFT || TK == Terminal.TK_RIGHT || TK == Terminal.TK_DOWN || TK == Terminal.TK_UP)
+
+                TK = Terminal.Read();
+                if (TK == Terminal.TK_LEFT || TK == Terminal.TK_RIGHT || TK == Terminal.TK_DOWN || TK == Terminal.TK_UP)
+                {
+                    dx = TK == Terminal.TK_LEFT ? -1 : TK == Terminal.TK_RIGHT ? 1 : 0;
+                    dy = TK == Terminal.TK_UP ? -1 : TK == Terminal.TK_DOWN ? 1 : 0;
+                }
+                if (TK == Terminal.TK_A || TK == Terminal.TK_W || TK == Terminal.TK_D || TK == Terminal.TK_S)
+                {
+                    dx = TK == Terminal.TK_A ? -1 : TK == Terminal.TK_D ? 1 : 0;
+                    dy = TK == Terminal.TK_W ? -1 : TK == Terminal.TK_S ? 1 : 0;
+                }
+                GameSession.MoveCursor(new System.Drawing.Point(dx, dy));
+                if (TK == Terminal.TK_BACKSPACE)
+                {
+                    GameSession = new HackGame(WordsDictionary, int.Parse(Settings["TerminalLevel"]), int.Parse(Settings["ScienceLevel"]), Settings["Language"].ToLower(), bool.Parse(Settings["SlowMode"]));
+                    GameSession.GenerateWordsTable();
+                    GameSession.SwitchColor(Settings["ColorTheme"].ToLower());//amber
+                }
+                if (TK == Terminal.TK_ESCAPE || TK == Terminal.TK_CLOSE)
+                {
+                    Terminal.Close();
+                }
+                if (TK == Terminal.TK_MOUSE_MOVE)
+                {
+                    mx = Terminal.State(Terminal.TK_MOUSE_X);
+                    my = Terminal.State(Terminal.TK_MOUSE_Y);
+                    MouseClickAvailable = false;
+                    if (mx >= 0 && my >= 0) GameSession.MoveToCursor(new System.Drawing.Point(mx, my));
+                    if (((mx >= 7 && mx < 19) || (mx > 26 && mx < 39)) && my >= (21 - 32 / 2))
                     {
-                        dx = TK == Terminal.TK_LEFT ? -1 : TK == Terminal.TK_RIGHT ? 1 : 0;
-                        dy = TK == Terminal.TK_UP ? -1 : TK == Terminal.TK_DOWN ? 1 : 0;
+                        MouseClickAvailable = true;
                     }
-                    if (TK == Terminal.TK_A || TK == Terminal.TK_W || TK == Terminal.TK_D || TK == Terminal.TK_S)
+                }
+                if (TK == Terminal.TK_ENTER || TK == Terminal.TK_SPACE || TK == Terminal.TK_E || TK == Terminal.TK_MOUSE_LEFT)
+                {
+                    if (TK != Terminal.TK_MOUSE_LEFT)
                     {
-                        dx = TK == Terminal.TK_A ? -1 : TK == Terminal.TK_D ? 1 : 0;
-                        dy = TK == Terminal.TK_W ? -1 : TK == Terminal.TK_S ? 1 : 0;
+                        int Bulls = GameSession.CheckWord();
                     }
-                    GameSession.MoveCursor(new System.Drawing.Point(dx, dy));
-                    if (TK == Terminal.TK_BACKSPACE)
+                    if (TK == Terminal.TK_MOUSE_LEFT && MouseClickAvailable)
                     {
-                        GameSession = new HackGame(WordsDictionary, int.Parse(Settings["TerminalLevel"]), int.Parse(Settings["ScienceLevel"]), Settings["Language"].ToLower(), bool.Parse(Settings["SlowMode"]));
-                        GameSession.GenerateWordsTable();
-                        GameSession.SwitchColor(Settings["ColorTheme"].ToLower());//amber
-                    }
-                    if (TK == Terminal.TK_ESCAPE || TK == Terminal.TK_CLOSE)
-                    {
-                        Terminal.Close();
-                    }
-                    if (TK == Terminal.TK_MOUSE_MOVE)
-                    {
-                        mx = Terminal.State(Terminal.TK_MOUSE_X);
-                        my = Terminal.State(Terminal.TK_MOUSE_Y);
-                        MouseClickAvailable = false;
-                        if (mx >= 0 && my >= 0) GameSession.MoveToCursor(new System.Drawing.Point(mx, my));
-                        if (((mx >= 7 && mx < 19) || (mx > 26 && mx < 39)) && my >= (21 - 32 / 2))
-                        {
-                            MouseClickAvailable = true;
-                        }
-                    }
-                    if (TK == Terminal.TK_ENTER || TK == Terminal.TK_SPACE || TK == Terminal.TK_E || TK == Terminal.TK_MOUSE_LEFT)
-                    {
-                        if (TK != Terminal.TK_MOUSE_LEFT)
-                        {
-                            int Bulls = GameSession.CheckWord();
-                        }
-                        if (TK == Terminal.TK_MOUSE_LEFT && MouseClickAvailable)
-                        {
-                            int Bulls = GameSession.CheckWord();
-                        }
+                        int Bulls = GameSession.CheckWord();
                     }
                 }
                 bCanShowing = true;
             }
-            ///////////////////////////////////////////////////////////////
+
         }
+        ///////////////////////////////////////////////////////////////
+
         static void Main(string[] args)
         {
             System.Collections.Generic.Dictionary<string, string> Settings = new Dictionary<string, string>();
@@ -456,8 +470,9 @@ namespace terminalhack
             GameSession.ShowFrame();
             GameSession.ShowFrame();
             int TK = 0;
-            /*
-            while (Terminal.HasInput() ? Terminal.Read() != Terminal.TK_CLOSE : true)
+
+
+            while (Terminal.HasInput() ? Terminal.Peek() != Terminal.TK_CLOSE : true)
             {
                 int dx = 0;
                 int dy = 0;
@@ -467,8 +482,27 @@ namespace terminalhack
                 while (Terminal.HasInput())
                 {
                     TK = Terminal.Read(); //Очистка очереди команд.
+                    if (TK == Terminal.TK_ESCAPE)
+                    {
+                        Settings = Menu(GameSession);
+                        GameSession.SwitchColor(Settings["ColorTheme"].ToLower());
+                        Terminal.Set("input.filter = [keyboard, mouse]; window: title='RobCo Industries™ Termlink',icon='icon.ico';");
+                        try
+                        {
+                            Terminal.Set("font: {0}, size={1}", Settings["Font"], Settings["FontSize"]);
+                        }
+                        catch (System.Exception)
+                        {
+                            Terminal.Set("font:");
+                        }
+                        GameSession.ShowFrame();
+                    }
                 }
-                TK = Terminal.Read();
+                //if (Terminal.HasInput()) //с этой строчкой неблокирующее чтение
+                {
+                    TK = Terminal.Read();
+                }
+                
                 if (TK == Terminal.TK_LEFT || TK == Terminal.TK_RIGHT || TK == Terminal.TK_DOWN || TK == Terminal.TK_UP)
                 {
                     dx = TK == Terminal.TK_LEFT ? -1 : TK == Terminal.TK_RIGHT ? 1 : 0;
@@ -516,7 +550,7 @@ namespace terminalhack
                     }
                     GameSession.ShowFrame();
                 }
-                if (TK == Terminal.TK_MOUSE_MOVE)
+                //if (TK == Terminal.TK_MOUSE_MOVE) //я не знаю
                 {
                     mx = Terminal.State(Terminal.TK_MOUSE_X);
                     my = Terminal.State(Terminal.TK_MOUSE_Y);
@@ -539,18 +573,14 @@ namespace terminalhack
                     }
                 }
             }
-            */
+            /*
             Thread ControlThread = new Thread(new ThreadStart(Control));
             Thread ShowThread = new Thread(new ThreadStart(Show));
             ControlThread.Start();
             ShowThread.Start();
+            */
+            
         }
-
-
     }
-
-
-
-
-
 }
+

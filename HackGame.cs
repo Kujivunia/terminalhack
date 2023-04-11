@@ -6,7 +6,7 @@ using BearLib;
 namespace terminalhack
 {
     //vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
-    class HackGame
+    public class HackGame
     {
         private Random rnd = new Random();
 
@@ -23,7 +23,7 @@ namespace terminalhack
 
         private int Attempts = 4;
 
-        private static readonly string TrashChars = "!\"#$%&\'()*+/:;<=>?@[\\]^_{|}";
+        private static readonly string TrashChars = "!\"#$%&\'()*+/:;<=>?@\\[\\]^_{|}";
         //private static readonly string Brackets = "<>[]{}()";
         private static readonly string OpenBrackets = "<[{(";
         private static readonly string CloseBrackets = ">]})";
@@ -166,9 +166,10 @@ namespace terminalhack
         }
         public HackGame(List<string> WordsList, int TerminalLevel = 50, int ScienceLevel = 50, string Language = "ru", bool bSlowMode = false)
         {
+
             this.bSlowMode = bSlowMode;
             this.OffsetStart = rnd.Next(OffsetMin, OffsetMax);
-            this.PasswordLength = 4 + 2 * (TerminalLevel / 25);
+            this.PasswordLength = 4 + 2 * (TerminalLevel / 25) + rnd.Next(0, 2);
             this.WordCount = this.DudsAndPasswordCount(ScienceLevel, TerminalLevel);
             this.Language = Language;
             //this.BracketCount = 50 + LuckyLevel * 10;
@@ -201,7 +202,7 @@ namespace terminalhack
             StringsSr.Close();
             Strings = Newtonsoft.Json.JsonConvert.DeserializeObject<Dictionary<string, Dictionary<string, string>>>(StringsJson);
 
-            int MaxLogWidth = 12+2;
+            int MaxLogWidth = 12 + 2;
             List<string> TempList = new List<string>();
             TempList.Add("EntryDenied");
             TempList.Add("Correct");
@@ -344,13 +345,18 @@ namespace terminalhack
                     }
                 }
                 this.IOLog.Add(">" + BracketCombination);
-                UsedBracketsIndex.Add(UsedBracketsIndexFind(CursorWordIndex));
-                if (this.Duds.Count<1)
+                
+                if (this.Duds.Count < 1)
                 {
                     this.Attempts++;
                     this.IOLog.Add(">" + this.Strings[this.Language]["EntryDenied"]);
                     return -1;
                 }
+                else
+                {
+                    UsedBracketsIndex.Add(UsedBracketsIndexFind(CursorWordIndex));//Если заглушек не осталось, такая комбинация не исчезает
+                }
+
                 if (this.rnd.Next(100) < 50)
                 {
                     this.Attempts = 4;
@@ -408,6 +414,10 @@ namespace terminalhack
                 if (WordsTable[CursorWordIndex] == "]")
                 {
                     this.IOLog.Add(">" + this.WordsTable[CursorWordIndex] + this.WordsTable[CursorWordIndex]);
+                } else
+                if (WordsTable[CursorWordIndex] == "[")
+                {
+                    this.IOLog.Add(">" + this.WordsTable[CursorWordIndex] + this.WordsTable[CursorWordIndex]);
                 }
                 else
                 {
@@ -438,18 +448,18 @@ namespace terminalhack
                 Terminal.Clear();
 
                 //Terminal.Print(0, 0, this.Strings[this.Language]["WelcomeToRobco"].ToUpper());
-                RobCoPrintingString(0, 0, this.Strings[this.Language]["WelcomeToRobco"].ToUpper(),2);
-                Terminal.Delay(580);    
-                Terminal.Print(0, 2, ">"); 
+                RobCoPrintingString(0, 0, this.Strings[this.Language]["WelcomeToRobco"].ToUpper(), 2);
+                Terminal.Delay(580);
+                Terminal.Print(0, 2, ">");
                 Terminal.Refresh(); Terminal.Delay(50);
                 UserPrintingString(1, 2, this.Strings[this.Language]["LogonAdmin"].ToUpper());
                 Terminal.Delay(580);
-                RobCoPrintingString(0, 4, this.Strings[this.Language]["EnterPassword"].ToUpper(),2);
+                RobCoPrintingString(0, 4, this.Strings[this.Language]["EnterPassword"].ToUpper(), 2);
                 Terminal.Delay(580);
                 Terminal.Refresh();
                 string pass = " ";
                 for (int x = 0; x < this.PasswordLength; x++) pass += "*";
-                Terminal.Print(0, 6, ">"); 
+                Terminal.Print(0, 6, ">");
                 Terminal.Refresh(); Terminal.Delay(50);
                 UserPrintingString(1, 6, pass.ToString());
                 Terminal.Refresh();
@@ -520,7 +530,7 @@ namespace terminalhack
                         }
                     }
 
-                    Terminal.Delay(64-(int)((DateTime.Now-t).TotalMilliseconds));
+                    Terminal.Delay(64 - (int)((DateTime.Now - t).TotalMilliseconds));
                 }
                 Terminal.BkColor(this.BkColor);
                 Terminal.Color(this.Color);
@@ -709,10 +719,7 @@ namespace terminalhack
                 if (this.Attempts <= 1 && !this.bUnlocked)
                 {
                     Terminal.Print(0, 0, this.Strings[this.Language]["RobcoIndustries"].ToUpper());
-                    //if (System.DateTime.Now.Millisecond<500)
-                    //{
                     Terminal.Print(0, 1, this.Strings[this.Language]["LockoutImminent"].ToUpper());
-                    //}
                     Terminal.Print(0, 3, this.Strings[this.Language]["AttemptsLeft"].ToUpper() + AttemptsCountSquares, Attempts);
 
                 }
