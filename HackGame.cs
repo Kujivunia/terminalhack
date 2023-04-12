@@ -14,14 +14,19 @@ namespace terminalhack
         private static readonly int DumpWidth = 12;
 
         private static readonly int OffsetInc = DumpWidth;
-        private static readonly int OffsetMin = 4096;
-        private static readonly int OffsetMax = 65150;
+        private static readonly int OffsetMin = 4096;//4096
+        private static readonly int OffsetMax = 65139;//65139
+
+        private static readonly int iHackingMaxWords = 20;
+        private static readonly int iHackingMinWords = 5;
+
         private int OffsetStart = 0;
 
         private static readonly int TerminalHeight = 22;//25-21
         private int TerminalWidth = 58;//80-64-56
 
-        private int Attempts = 4;
+        private int CurrentAttempts = 4;
+        private int MaxCurrentAttempts = 4;
 
         private static readonly string TrashChars = "!\"#$%&\'()*+/:;<=>?@\\[\\]^_{|}";
         //private static readonly string Brackets = "<>[]{}()";
@@ -98,7 +103,13 @@ namespace terminalhack
             if (TerminalLvl == 100 && ScienceLvl == 100)
                 return 13;
             else
-                return ((int)System.Math.Round(15d / (100 - TerminalLvl) * (100 - ScienceLvl)) + 5) < 5 ? 5 : ((int)System.Math.Round(15d / (100 - TerminalLvl) * (100 - ScienceLvl)) + 5);
+            {
+                int scienceOffset = ScienceLvl - TerminalLvl;
+                int lockOffset = 100 - TerminalLvl;
+                double WordsMult = lockOffset != 0 ? ((double)scienceOffset / lockOffset) : 0.5;
+                return (int)Math.Round((1 - WordsMult) * (iHackingMaxWords - iHackingMinWords)) + iHackingMinWords;
+            }
+            //return ((int)System.Math.Round(15d / (100 - TerminalLvl) * (100 - ScienceLvl)) + 5) < 5 ? 5 : ((int)System.Math.Round(15d / (100 - TerminalLvl) * (100 - ScienceLvl)) + 5);
         }
 
         public void SetUserColor(System.Drawing.Color Color, System.Drawing.Color BkColor)
@@ -164,7 +175,7 @@ namespace terminalhack
 
             return result;
         }
-        public HackGame(List<string> WordsList, int TerminalLevel = 50, int ScienceLevel = 50, string Language = "ru", bool bSlowMode = false)
+        public HackGame(List<string> WordsList, int TerminalLevel = 50, int ScienceLevel = 50,/* int LuckLevel = 5,*/ string Language = "ru", bool bSlowMode = false)
         {
 
             this.bSlowMode = bSlowMode;
@@ -172,6 +183,23 @@ namespace terminalhack
             this.PasswordLength = 4 + 2 * (TerminalLevel / 25) + rnd.Next(0, 2);
             this.WordCount = this.DudsAndPasswordCount(ScienceLevel, TerminalLevel);
             this.Language = Language;
+            //Оказывается, при науке <44 можно получить до 7 (!!!) попыток
+            if (ScienceLevel < 45)
+            {
+                while (
+                    (rnd.Next(45) < (45 - ScienceLevel)) 
+                    && rnd.Next(16) <= 10)
+                {
+                    this.CurrentAttempts++;
+                }
+                this.CurrentAttempts = this.CurrentAttempts > 7 ? 
+                    rnd.Next(4, 7) : 
+                    this.CurrentAttempts;
+                this.MaxCurrentAttempts = this.CurrentAttempts;
+            }
+
+            //this.Attempts += rnd.Next(0, 3);
+
             //this.BracketCount = 50 + LuckyLevel * 10;
             switch (this.Language)
             {
@@ -297,7 +325,7 @@ namespace terminalhack
                 do
                 {
                     j = rnd.Next(this.WordsDict.Count);
-                } while (this.WordsTable.Contains(this.WordsDict[j]) || WordBulls(this.Password, this.WordsDict[j]) < 1);
+                } while (this.WordsTable.Contains(this.WordsDict[j]) || WordBulls(this.Password, this.WordsDict[j]) < 0);
 
                 this.WordsTable.Add(this.WordsDict[j]);
             }
@@ -330,7 +358,7 @@ namespace terminalhack
             KeyValuePair<int, int> CursorBlock = new KeyValuePair<int, int>(
                 (int)(this.CursorFlat / DumpWidth) * DumpWidth,
                 (int)(this.CursorFlat / DumpWidth) * DumpWidth + 1);
-            this.Attempts--;
+            this.CurrentAttempts--;
 
             if (OpenBrackets.Contains(this.WordsTable[CursorWordIndex]) && SearchSecretCombinations(CursorWordIndex).Key != SearchSecretCombinations(CursorWordIndex).Value)
             {
@@ -345,10 +373,10 @@ namespace terminalhack
                     }
                 }
                 this.IOLog.Add(">" + BracketCombination);
-                
+
                 if (this.Duds.Count < 1)
                 {
-                    this.Attempts++;
+                    this.CurrentAttempts++;
                     this.IOLog.Add(">" + this.Strings[this.Language]["EntryDenied"]);
                     return -1;
                 }
@@ -359,7 +387,7 @@ namespace terminalhack
 
                 if (this.rnd.Next(100) < 50)
                 {
-                    this.Attempts = 4;
+                    this.CurrentAttempts = this.MaxCurrentAttempts;
 
                     this.IOLog.Add(">" + this.Strings[this.Language]["Allowance"]);
                     this.IOLog.Add(">" + this.Strings[this.Language]["Replenished"]);
@@ -377,7 +405,7 @@ namespace terminalhack
                     }
                     this.WordsTableRangesFill();
                     this.CursorWordIndexMath();
-                    this.Attempts++;
+                    this.CurrentAttempts++;
                     this.IOLog.Add(">" + this.Strings[this.Language]["DudRemoved"]);
                     return -3;
                 }
@@ -391,7 +419,7 @@ namespace terminalhack
                 this.IOLog.Add(">" + this.Strings[this.Language]["WhileSystem"]);
                 this.IOLog.Add(">" + this.Strings[this.Language]["IsAccessed"]);
                 this.bUnlocked = true;
-                this.Attempts += 1;
+                this.CurrentAttempts += 1;
                 return this.PasswordLength;
             }
             else if (this.WordsTable[CursorWordIndex].Length == this.PasswordLength)
@@ -405,7 +433,7 @@ namespace terminalhack
                 this.IOLog.Add(">" + this.WordsTable[CursorWordIndex].ToUpper());
                 this.IOLog.Add(">" + this.Strings[this.Language]["EntryDenied"]);
                 this.IOLog.Add(">" + Bulls + "/" + this.PasswordLength + " " + this.Strings[this.Language]["Correct"]);
-                if (this.Attempts < 1)
+                if (this.CurrentAttempts < 1)
                     this.bLocked = true;
                 return Bulls;
             }
@@ -414,7 +442,8 @@ namespace terminalhack
                 if (WordsTable[CursorWordIndex] == "]")
                 {
                     this.IOLog.Add(">" + this.WordsTable[CursorWordIndex] + this.WordsTable[CursorWordIndex]);
-                } else
+                }
+                else
                 if (WordsTable[CursorWordIndex] == "[")
                 {
                     this.IOLog.Add(">" + this.WordsTable[CursorWordIndex] + this.WordsTable[CursorWordIndex]);
@@ -428,11 +457,11 @@ namespace terminalhack
                 this.IOLog.Add(">" + this.WordBulls(this.Password, this.WordsTable[CursorWordIndex]) + "/" + this.PasswordLength + " " + this.Strings[this.Language]["Correct"]);
             }
 
-            if (this.Attempts < 1)
+            if (this.CurrentAttempts < 1)
             {
                 this.IOLog.Add(">" + this.Strings[this.Language]["InitLockout"]);
             }
-            if (this.Attempts < 1)
+            if (this.CurrentAttempts < 1)
                 this.bLocked = true;
 
             return 0;
@@ -450,9 +479,9 @@ namespace terminalhack
                 }
                 catch (Exception)
                 {
-                result = " Terminal hacked. \n TerminalContent.txt not found. \n ← Backspace to restart";
+                    result = " Terminal hacked. \n TerminalContent.txt not found. \n ← Backspace to restart";
                 }
-                
+
                 return result;
             }
 
@@ -593,14 +622,14 @@ namespace terminalhack
             {
 
                 string AttemptsCountSquares = "";
-                for (int sq = 0; sq < this.Attempts; sq++)
+                for (int sq = 0; sq < this.CurrentAttempts; sq++)
                 {
                     AttemptsCountSquares += " " + this.Strings[this.Language]["Square"];
                 }
                 this.RobCoPrintingString(0, 0, this.Strings[this.Language]["RobcoIndustries"].ToUpper());
                 this.RobCoPrintingString(0, 1, this.Strings[this.Language]["EnterPassword"].ToUpper());
-                this.RobCoPrintingString(0, 3, this.Attempts.ToString() + this.Strings[this.Language]["AttemptsLeft"].ToUpper().Substring(3));
-                Terminal.Print((this.Attempts.ToString() + this.Strings[this.Language]["AttemptsLeft"].ToUpper().Substring(3)).Length, 3, AttemptsCountSquares);//Так и задумано. 
+                this.RobCoPrintingString(0, 3, this.CurrentAttempts.ToString() + this.Strings[this.Language]["AttemptsLeft"].ToUpper().Substring(3));
+                Terminal.Print((this.CurrentAttempts.ToString() + this.Strings[this.Language]["AttemptsLeft"].ToUpper().Substring(3)).Length, 3, AttemptsCountSquares);//Так и задумано. 
 
                 string[,] TempWordTable = new string[TerminalWidth, TerminalHeight];
                 System.Text.StringBuilder AllChars = new System.Text.StringBuilder();
@@ -730,29 +759,29 @@ namespace terminalhack
                 }
 
                 string AttemptsCountSquares = "";
-                for (int sq = 0; sq < this.Attempts; sq++)
+                for (int sq = 0; sq < this.CurrentAttempts; sq++)
                 {
                     AttemptsCountSquares += " " + this.Strings[this.Language]["Square"];
                 }
 
 
-                if (this.Attempts > 1)
+                if (this.CurrentAttempts > 1)
                 {
                     Terminal.Print(0, 0, this.Strings[this.Language]["RobcoIndustries"].ToUpper());
                     Terminal.Print(0, 1, this.Strings[this.Language]["EnterPassword"].ToUpper());
-                    Terminal.Print(0, 3, this.Strings[this.Language]["AttemptsLeft"].ToUpper() + AttemptsCountSquares, Attempts);
+                    Terminal.Print(0, 3, this.Strings[this.Language]["AttemptsLeft"].ToUpper() + AttemptsCountSquares, CurrentAttempts);
                 }
-                if (this.Attempts <= 1 && !this.bUnlocked)
+                if (this.CurrentAttempts <= 1 && !this.bUnlocked)
                 {
                     Terminal.Print(0, 0, this.Strings[this.Language]["RobcoIndustries"].ToUpper());
                     Terminal.Print(0, 1, this.Strings[this.Language]["LockoutImminent"].ToUpper());
-                    Terminal.Print(0, 3, this.Strings[this.Language]["AttemptsLeft"].ToUpper() + AttemptsCountSquares, Attempts);
+                    Terminal.Print(0, 3, this.Strings[this.Language]["AttemptsLeft"].ToUpper() + AttemptsCountSquares, CurrentAttempts);
 
                 }
-                if (this.Attempts >= 1 && this.bUnlocked)
+                if (this.CurrentAttempts >= 1 && this.bUnlocked)
                 {
                     Terminal.Print(0, 0, this.Strings[this.Language]["RobcoIndustries"].ToUpper());
-                    Terminal.Print(0, 3, this.Strings[this.Language]["AttemptsLeft"].ToUpper() + AttemptsCountSquares, Attempts);
+                    Terminal.Print(0, 3, this.Strings[this.Language]["AttemptsLeft"].ToUpper() + AttemptsCountSquares, CurrentAttempts);
                 }
 
 
