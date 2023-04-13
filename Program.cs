@@ -189,6 +189,15 @@ namespace terminalhack
                                         Terminal.ClearArea(12, 0, 3, 1);
                                         Terminal.ReadStr(12, 0, ScienceLvlStr, 3);
                                         //if (ScienceLvlStr.ToString().Length < 1) ScienceLvlStr.Append("50");
+                                        try
+                                        {
+                                            int.Parse(ScienceLvlStr.ToString());
+                                        }
+                                        catch (System.Exception)
+                                        {
+                                            ScienceLvlStr.Clear();
+                                            ScienceLvlStr.Append(Settings["ScienceLevel"]);
+                                        }
                                         if (ScienceLvlStr.ToString().Length < 1) ScienceLvlStr.Append(Settings["ScienceLevel"]);
                                         Settings["ScienceLevel"] = (ScienceLvlStr.ToString());
                                         if (int.Parse(Settings["ScienceLevel"]) < 0)
@@ -237,7 +246,16 @@ namespace terminalhack
                                         Terminal.ClearArea(13, 1, 3, 1);
                                         Terminal.ReadStr(13, 1, TerminalLvlStr, 3);
                                         //if (TerminalLvlStr.ToString().Length < 1) TerminalLvlStr.Append("50");
-                                        if (ScienceLvlStr.ToString().Length < 1) TerminalLvlStr.Append(Settings["TerminalLevel"]);
+                                        try
+                                        {
+                                            int.Parse(TerminalLvlStr.ToString());
+                                        }
+                                        catch (System.Exception)
+                                        {
+                                            TerminalLvlStr.Clear();
+                                            TerminalLvlStr.Append(Settings["TerminalLevel"]);
+                                        }
+                                        if (TerminalLvlStr.ToString().Length < 1) TerminalLvlStr.Append(Settings["TerminalLevel"]);
                                         Settings["TerminalLevel"] = (TerminalLvlStr.ToString());
                                         if (int.Parse(Settings["TerminalLevel"]) < 0)
                                         {
@@ -303,6 +321,15 @@ namespace terminalhack
                                     {
                                         Terminal.ClearArea(49, 5, 2, 1);
                                         Terminal.ReadStr(49, 5, LuckLvlStr, 2);
+                                        try
+                                        {
+                                            int.Parse(LuckLvlStr.ToString());
+                                        }
+                                        catch (System.Exception)
+                                        {
+                                            LuckLvlStr.Clear();
+                                            LuckLvlStr.Append(Settings["LuckLevel"]);
+                                        }
                                         if (LuckLvlStr.ToString().Length < 1) LuckLvlStr.Append(Settings["LuckLevel"]);
                                         
                                         if (int.Parse(LuckLvlStr.ToString()) < 1)
@@ -466,9 +493,10 @@ namespace terminalhack
             System.Collections.Generic.Dictionary<string, string> Settings = new Dictionary<string, string>();
             Settings.Add("TerminalLevel", "50");
             Settings.Add("ScienceLevel", "50");
+            Settings.Add("LuckLevel", "5");
             Settings.Add("ColorTheme", "f3");
-            Settings.Add("Language", "ru");
-            Settings.Add("FontSize", "18");
+            Settings.Add("Language", "en");
+            Settings.Add("FontSize", "24");
             Settings.Add("Font", "FixedsysRus.ttf");
 
             bool MouseClickAvailable = false;
