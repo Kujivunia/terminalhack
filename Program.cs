@@ -36,11 +36,14 @@ namespace terminalhack
             void ShowMenu()
             {
                 string Square = "";
+                string TerminalDifficulty = "Average";
                 Terminal.BkColor(System.Drawing.Color.Blue);
                 Terminal.Color(System.Drawing.Color.Yellow);
                 Terminal.ClearArea(0, 0, (Terminal.TK_WIDTH / 2), 6);
                 Terminal.Print(0, 0, "ScienceLvl: {0}", Settings["ScienceLevel"]);
                 Terminal.Print(0, 1, "TerminalLvl: {0}", Settings["TerminalLevel"]);
+                Terminal.Print(40, 5, "LuckLvl: {0}", Settings["LuckLevel"]);
+                //Terminal.Print(0, 2, "LuckLvl: {0}", Settings["LuckLevel"]);
                 Terminal.Print(0, 2, "ColorTheme: |f3| |f4| |amber|");
                 Terminal.Print(0, 3, "Language: |ru| |en|");
                 Terminal.Print(0, 4, "FontSize: |12| |18| |24|");
@@ -49,6 +52,28 @@ namespace terminalhack
                 Terminal.ClearArea(17, 0, 21, 1);
                 Terminal.Print(18, 0, "┣┷┷┷┷╋┷┷┷┷╋┷┷┷┷╋┷┷┷┷┫");
                 Terminal.Print(18, 1, "┣┷┷┷┷╋┷┷┷┷╋┷┷┷┷╋┷┷┷┷┫");
+                //Terminal.Print(18, 2, "1|2|3|4|5|6|7|8|9|10");
+
+
+                if (int.Parse(Settings["TerminalLevel"]) == 100)
+                    TerminalDifficulty = "Very Hard";
+                else
+                if (int.Parse(Settings["TerminalLevel"]) == 75)
+                    TerminalDifficulty = "Hard";
+                else
+                if (int.Parse(Settings["TerminalLevel"]) == 50)
+                    TerminalDifficulty = "Average";
+                else
+                if (int.Parse(Settings["TerminalLevel"]) == 25)
+                    TerminalDifficulty = "Easy";
+                else
+                if (int.Parse(Settings["TerminalLevel"]) == 0)
+                    TerminalDifficulty = "Very Easy";
+                else
+                    TerminalDifficulty = "Custom level";
+
+                Terminal.Print(40, 1, TerminalDifficulty);
+                
                 //Terminal.Layer(1);
                 Terminal.Print(18 + int.Parse(Settings["ScienceLevel"]) / 5, 0, Square);
                 Terminal.Print(18 + int.Parse(Settings["TerminalLevel"]) / 5, 1, Square);
@@ -118,6 +143,7 @@ namespace terminalhack
                 int TK = 0;
                 StringBuilder TerminalLvlStr = new StringBuilder("");
                 StringBuilder ScienceLvlStr = new StringBuilder("");
+                StringBuilder LuckLvlStr = new StringBuilder("");
                 while (Terminal.HasInput() ? Terminal.Read() != Terminal.TK_CLOSE : true)
                 {
                     ShowMenu();
@@ -157,12 +183,13 @@ namespace terminalhack
                         {
                             case 0:
                                 {
-                                    if (mx < 18)//16
+                                    if (mx < 16)//16 18
                                     {
-                                        /*
-                                        Terminal.ClearArea(12, 0, 4, 1);
+
+                                        Terminal.ClearArea(12, 0, 3, 1);
                                         Terminal.ReadStr(12, 0, ScienceLvlStr, 3);
-                                        if (ScienceLvlStr.ToString().Length < 1) ScienceLvlStr.Append("50");
+                                        //if (ScienceLvlStr.ToString().Length < 1) ScienceLvlStr.Append("50");
+                                        if (ScienceLvlStr.ToString().Length < 1) ScienceLvlStr.Append(Settings["ScienceLevel"]);
                                         Settings["ScienceLevel"] = (ScienceLvlStr.ToString());
                                         if (int.Parse(Settings["ScienceLevel"]) < 0)
                                         {
@@ -176,11 +203,13 @@ namespace terminalhack
                                         {
                                             Settings["TerminalLevel"] = Settings["ScienceLevel"];
                                         }
-                                        */
+                                        ScienceLvlStr.Clear();
+
                                     }
-                                    else if (mx < (18 + 21))
+                                    else if (mx < (18 + 21) && mx > 17)
                                     {
-                                        if (ScienceLvlStr.ToString().Length < 1) ScienceLvlStr.Append("50");
+                                        //if (ScienceLvlStr.ToString().Length < 1) ScienceLvlStr.Append("50");
+                                        if (ScienceLvlStr.ToString().Length < 1) ScienceLvlStr.Append(Settings["ScienceLevel"]);
                                         Settings["ScienceLevel"] = ((mx - 18) * 5).ToString();
                                         if (int.Parse(Settings["ScienceLevel"]) < 0)
                                         {
@@ -194,6 +223,7 @@ namespace terminalhack
                                         {
                                             Settings["TerminalLevel"] = Settings["ScienceLevel"];
                                         }
+                                        ScienceLvlStr.Clear();
                                     }
 
                                     break;
@@ -201,12 +231,13 @@ namespace terminalhack
                             case 1:
                                 {
 
-                                    if (mx < 18)//17
+                                    if (mx < 17)//17 18
                                     {
-                                        /*
-                                        Terminal.ClearArea(13, 1, 4, 1);
+
+                                        Terminal.ClearArea(13, 1, 3, 1);
                                         Terminal.ReadStr(13, 1, TerminalLvlStr, 3);
-                                        if (TerminalLvlStr.ToString().Length < 1) TerminalLvlStr.Append("50");
+                                        //if (TerminalLvlStr.ToString().Length < 1) TerminalLvlStr.Append("50");
+                                        if (ScienceLvlStr.ToString().Length < 1) TerminalLvlStr.Append(Settings["TerminalLevel"]);
                                         Settings["TerminalLevel"] = (TerminalLvlStr.ToString());
                                         if (int.Parse(Settings["TerminalLevel"]) < 0)
                                         {
@@ -220,11 +251,13 @@ namespace terminalhack
                                         {
                                             Settings["ScienceLevel"] = Settings["TerminalLevel"];
                                         }
-                                    */
+                                        TerminalLvlStr.Clear();
+
                                     }
-                                    else if (mx < (18 + 21))
+                                    else if (mx < (18 + 21) && mx > 17)
                                     {
-                                        if (TerminalLvlStr.ToString().Length < 1) TerminalLvlStr.Append("50");
+                                        //if (TerminalLvlStr.ToString().Length < 1) TerminalLvlStr.Append("50");
+                                        if (ScienceLvlStr.ToString().Length < 1) TerminalLvlStr.Append(Settings["TerminalLevel"]);
                                         Settings["TerminalLevel"] = ((mx - 18) * 5).ToString();
                                         if (int.Parse(Settings["TerminalLevel"]) < 0)
                                         {
@@ -238,6 +271,7 @@ namespace terminalhack
                                         {
                                             Settings["ScienceLevel"] = Settings["TerminalLevel"];
                                         }
+                                        TerminalLvlStr.Clear();
                                     }
                                     break;
                                 }
@@ -265,6 +299,26 @@ namespace terminalhack
                                 {
                                     if (mx > 9 && mx < 14) Settings["SlowMode"] = "True";
                                     if (mx > 14 && mx < 19) Settings["SlowMode"] = "False";
+                                    if (mx > 39 && mx < 51)
+                                    {
+                                        Terminal.ClearArea(49, 5, 2, 1);
+                                        Terminal.ReadStr(49, 5, LuckLvlStr, 2);
+                                        if (LuckLvlStr.ToString().Length < 1) LuckLvlStr.Append(Settings["LuckLevel"]);
+                                        
+                                        if (int.Parse(LuckLvlStr.ToString()) < 1)
+                                        {
+                                            LuckLvlStr.Clear(); 
+                                            LuckLvlStr.Append((1).ToString());
+                                        }
+                                        if (int.Parse(LuckLvlStr.ToString()) > 10)
+                                        {
+                                            LuckLvlStr.Clear();
+                                            LuckLvlStr.Append((10).ToString());
+                                        }
+
+                                        Settings["LuckLevel"] = (LuckLvlStr.ToString());
+                                        LuckLvlStr.Clear();
+                                    }
                                     break;
                                 }
                             default:
@@ -318,7 +372,7 @@ namespace terminalhack
             List<string> WordsDictionary = JsonConvert.DeserializeObject<List<string>>(json).Where(item => item.Length >= 4 && item.Length <= 12).ToList();
             Settings = JsonConvert.DeserializeObject<System.Collections.Generic.Dictionary<string, string>>(SettingsJson);
 
-            GameSession = new HackGame(WordsDictionary, int.Parse(Settings["TerminalLevel"]), int.Parse(Settings["ScienceLevel"]), Settings["Language"].ToLower(), bool.Parse(Settings["SlowMode"]));
+            GameSession = new HackGame(WordsDictionary, int.Parse(Settings["TerminalLevel"]), int.Parse(Settings["ScienceLevel"]), int.Parse(Settings["LuckLevel"]), Settings["Language"].ToLower(), bool.Parse(Settings["SlowMode"]));
 
             System.IO.StreamReader StringsSr = new System.IO.StreamReader("Strings.json");
             string StringsJson = StringsSr.ReadToEnd();
@@ -371,7 +425,7 @@ namespace terminalhack
                 GameSession.MoveCursor(new System.Drawing.Point(dx, dy));
                 if (TK == Terminal.TK_BACKSPACE)
                 {
-                    GameSession = new HackGame(WordsDictionary, int.Parse(Settings["TerminalLevel"]), int.Parse(Settings["ScienceLevel"]), Settings["Language"].ToLower(), bool.Parse(Settings["SlowMode"]));
+                    GameSession = new HackGame(WordsDictionary, int.Parse(Settings["TerminalLevel"]), int.Parse(Settings["ScienceLevel"]), int.Parse(Settings["LuckLevel"]), Settings["Language"].ToLower(), bool.Parse(Settings["SlowMode"]));
                     GameSession.GenerateWordsTable();
                     GameSession.SwitchColor(Settings["ColorTheme"].ToLower());//amber
                 }
@@ -428,7 +482,7 @@ namespace terminalhack
             List<string> WordsDictionary = JsonConvert.DeserializeObject<List<string>>(json).Where(item => item.Length >= 4 && item.Length <= 12).ToList();
             Settings = JsonConvert.DeserializeObject<System.Collections.Generic.Dictionary<string, string>>(SettingsJson);
 
-            GameSession = new HackGame(WordsDictionary, int.Parse(Settings["TerminalLevel"]), int.Parse(Settings["ScienceLevel"]), Settings["Language"].ToLower(), bool.Parse(Settings["SlowMode"]));
+            GameSession = new HackGame(WordsDictionary, int.Parse(Settings["TerminalLevel"]), int.Parse(Settings["ScienceLevel"]), int.Parse(Settings["LuckLevel"]), Settings["Language"].ToLower(), bool.Parse(Settings["SlowMode"]));
 
             System.IO.StreamReader StringsSr = new System.IO.StreamReader("Strings.json");
             string StringsJson = StringsSr.ReadToEnd();
@@ -502,7 +556,7 @@ namespace terminalhack
                 {
                     TK = Terminal.Read();
                 }
-                
+
                 if (TK == Terminal.TK_LEFT || TK == Terminal.TK_RIGHT || TK == Terminal.TK_DOWN || TK == Terminal.TK_UP)
                 {
                     dx = TK == Terminal.TK_LEFT ? -1 : TK == Terminal.TK_RIGHT ? 1 : 0;
@@ -516,7 +570,7 @@ namespace terminalhack
                 GameSession.MoveCursor(new System.Drawing.Point(dx, dy));
                 if (TK == Terminal.TK_BACKSPACE)
                 {
-                    GameSession = new HackGame(WordsDictionary, int.Parse(Settings["TerminalLevel"]), int.Parse(Settings["ScienceLevel"]), Settings["Language"].ToLower(), bool.Parse(Settings["SlowMode"]));
+                    GameSession = new HackGame(WordsDictionary, int.Parse(Settings["TerminalLevel"]), int.Parse(Settings["ScienceLevel"]), int.Parse(Settings["LuckLevel"]), Settings["Language"].ToLower(), bool.Parse(Settings["SlowMode"]));
                     GameSession.GenerateWordsTable();
                     GameSession.SwitchColor(Settings["ColorTheme"].ToLower());//amber
                     GameSession.ShowFrame();
@@ -579,7 +633,7 @@ namespace terminalhack
             ControlThread.Start();
             ShowThread.Start();
             */
-            
+
         }
     }
 }

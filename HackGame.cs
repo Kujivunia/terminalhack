@@ -175,7 +175,7 @@ namespace terminalhack
 
             return result;
         }
-        public HackGame(List<string> WordsList, int TerminalLevel = 50, int ScienceLevel = 50,/* int LuckLevel = 5,*/ string Language = "ru", bool bSlowMode = false)
+        public HackGame(List<string> WordsList, int TerminalLevel = 50, int ScienceLevel = 50, int LuckLevel = 5, string Language = "ru", bool bSlowMode = false)
         {
 
             this.bSlowMode = bSlowMode;
