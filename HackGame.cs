@@ -14,8 +14,8 @@ namespace terminalhack
         private static readonly int DumpWidth = 12;
 
         private static readonly int OffsetInc = DumpWidth;
-        private static readonly int OffsetMin = 4096;//4096
-        private static readonly int OffsetMax = 65139;//65139
+        private static readonly int OffsetMin = 4096 / 12 * 12 + 12;//4096
+        private static readonly int OffsetMax = 65139 / 12 * 12;//65139
 
         private static readonly int iHackingMaxWords = 20;
         private static readonly int iHackingMinWords = 5;
@@ -179,7 +179,7 @@ namespace terminalhack
         {
 
             this.bSlowMode = bSlowMode;
-            this.OffsetStart = rnd.Next(OffsetMin, OffsetMax);
+            this.OffsetStart = rnd.Next(OffsetMin, OffsetMax) / 12 * 12; //убрать возможность получения не кратных 12 адресов.
             this.PasswordLength = 4 + 2 * (TerminalLevel / 25) + rnd.Next(0, 2);
             this.WordCount = this.DudsAndPasswordCount(ScienceLevel, TerminalLevel);
             this.Language = Language;
@@ -187,13 +187,13 @@ namespace terminalhack
             if (ScienceLevel < 45)
             {
                 while (
-                    (rnd.Next(45) < (45 - ScienceLevel)) 
+                    (rnd.Next(45) < (45 - ScienceLevel))
                     && rnd.Next(16) <= 10)
                 {
                     this.CurrentAttempts++;
                 }
-                this.CurrentAttempts = this.CurrentAttempts > 7 ? 
-                    rnd.Next(4, 7) : 
+                this.CurrentAttempts = this.CurrentAttempts > 7 ?
+                    rnd.Next(4, 7) :
                     this.CurrentAttempts;
                 this.MaxCurrentAttempts = this.CurrentAttempts;
             }
